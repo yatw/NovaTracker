@@ -1,0 +1,15 @@
+To Nova and GM Team:
+
+I am a Nova player and I am a undergraduate computer science student. I am currently building an in-game market tracker that will notify user when an item is on sell (under their ideal price), and I would use Discord bot to DM the user.
+
+This project is mainly for me to practice programming and I am not sure it would actually be solid enough to become a real application. (but seems  possible)
+
+I am writing to ask for permission to web scraping on the nova market website. Essentially this is how I am getting the data, without an API. I am willing to share the code for monitoring purposes.
+
+I am really excited about this self project and it would benefit many players in game and keep the game server growth. (I plan to make it a free application even if it is good enough for players to use, if it sucks, it would still be good practice) Thanks in advance.
+
+PS Love this server, my first RO server
+
+Sincerely,
+
+IGN Babyish Love
