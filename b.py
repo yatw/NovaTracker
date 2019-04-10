@@ -3,8 +3,8 @@ import discord
 import re
 
 from discord.ext import commands
-from bot_config import DISCORD_TOKEN, db
-from novamarket import check_nova_market, get_item_name
+from bot_config import DISCORD_TOKEN
+import bot_helper
 
 
 #https://github.com/Rapptz/discord.py
@@ -34,11 +34,11 @@ class MyClient(discord.Client):
 
             user_discord_id = message.author.id
 
-            if (await self.already_registrated(user_discord_id)):
+            if (await bot_helper.already_registrated(user_discord_id)):
                 await message.author.send('You have already registed!')
                 return
             
-            await self.user_register(user_discord_id)
+            await bot_helper.user_register(user_discord_id)
             await message.author.send('You are now registed, you can start tracking items with !track command')
             return
 
@@ -53,7 +53,7 @@ class MyClient(discord.Client):
         
             
             user_discord_id = message.author.id
-            if not(await self.already_registrated(user_discord_id)):
+            if not(await bot_helper.already_registrated(user_discord_id)):
                 await message.author.send("Please first registred with !register command")
                 return
                 
@@ -62,7 +62,7 @@ class MyClient(discord.Client):
             # example         !track 21018 800000000 8
 
             
-            result = await self.vertify_track_command(message.content)
+            result = await bot_helper.vertify_track_command(message.content)
 
             if (result[0] != 1): # user input is invalid
                 invalid_format_response = "Incorrect Format, Example Usage is \n !track item_id ideal_price refine_goal \n !track 21018 800000000 8 " 
@@ -76,7 +76,7 @@ class MyClient(discord.Client):
 
                     
             # item not already tracking
-            if (await self.already_tracking(user_discord_id, item_id)):
+            if (await bot_helper.already_tracking(user_discord_id, item_id)):
                     response = 'You are already tracking ' + item_name
                     await message.author.send(response)
                     return
@@ -91,7 +91,7 @@ class MyClient(discord.Client):
         
             if (user_confirm_text.content == "CONFIRM"):
            
-                await self.user_track_item(user_discord_id, item_id, ideal_price, refine_goal)
+                await bot_helper.user_track_item(user_discord_id, item_id, item_name, ideal_price, refine_goal)
                 response = 'Nova Tracker is now tracking ' + item_name + ', you will be notified when this item is on sell under ' +  str(ideal_price) + " at refine greater than " + str(refine_goal)
                 await message.author.send(response)
                 return
@@ -110,7 +110,7 @@ class MyClient(discord.Client):
             # Ask user for confirmation
 
             user_discord_id = message.author.id
-            if not(await self.already_registrated(user_discord_id)):
+            if not(await bot_helper.already_registrated(user_discord_id)):
                 await message.author.send("Please first registred with !register command")
                 return
                 
@@ -118,23 +118,23 @@ class MyClient(discord.Client):
             # correct usage:  !untrack item_id
             # example         !untrack 21018
 
-            item_id = await self.vertify_untrack_command(message.content)
+            item_id = await bot_helper.vertify_untrack_command(message.content)
 
             if (item_id == ""):
                 await message.author.send("Invalid Format, Example Usage is \n !untrack item_id\n !track 21018")
                 return
 
-            item_name = get_item_name(item_id)
+            item_name = bot_helper.get_item_name(item_id)
 
             if (item_name == "Unknown"):
                 await message.author.send("Item " + item_id + " do not exist, please double check the ITEM ID")
                 return
 
-            if not (await self.already_tracking(user_discord_id, item_id)):
+            if not (await bot_helper.already_tracking(user_discord_id, item_id)):
                 await message.author.send("You have not been tracking " + item_name)
                 return
         
-            await self.user_untrack_item(user_discord_id, item_id)
+            await bot_helper.user_untrack_item(user_discord_id, item_id)
             await message.author.send("You are no longer tracking " + item_name)
             return 
 
@@ -142,7 +142,17 @@ class MyClient(discord.Client):
             
             await message.author.send("Invalid Format, Example Usage is \n !untrack item_id\n !track 21018")
 
+        if message.content.startswith('!getname'):
 
+            result = re.findall(r"[A-Za-z0-9]+",message.content)
+
+            input_id = result[1]
+            item_name = bot_helper.get_item_name(input_id)
+            await message.author.send(item_name)
+
+            return 
+        
+            
         # For fun stuff all here
     
         if message.content.startswith('about'):
@@ -166,145 +176,6 @@ class MyClient(discord.Client):
 
             #print('1 cycle')
             
-
-    
-    async def already_registrated(self, user_discord_id):
-        '''Return True if find user in the database'''
-
-
-        if (db.users.find({'DISCORD_ID' : user_discord_id}).count() != 0):
-            return True
-
-        return False
-
-    async def user_register(self,user_discord_id):
-
-        db.users.insert(
-                {
-                    'DISCORD_ID' : user_discord_id,
-                    'INTERESTED_ITEMS' : []
-                }
-            )
-
-        return None
-
-    async def vertify_track_command(self, command):
-        # correct usage:  !track item_id ideal_price refine_goal
-        # example         !track 21018 800000000 8
-
-        try:
-            result = re.findall(r"[\w]+",command)
-
-            if (len(result) >= 5):
-                raise Exception('Extra parameters')
-
-            item_id = result[1]
-            ideal_price = int(result[2])
-            if (ideal_price < 0 or ideal_price > 1000000000):
-                raise Exception('Invalid Ideal Price')
-            result[2] = ideal_price
-    
-            
-            refine_goal = int(result[3])
-            if (refine_goal < 0 or refine_goal > 20):
-                raise Exception('Invalid Refine Goal')
-            result[3] = refine_goal
-
-                
-
-            item_name = get_item_name(item_id)
-            if (item_name == "Unknown"):
-                raise Exception('Invalid Item ID')
-            
-            result.append(item_name)
-            
-            result[0] = 1 # valid
-        except:
-            result[0] = 0 # not valid
-
-        print(result)
-        return result
-
-
-    async def vertify_untrack_command(self, command):
-        # all you have to do is vertify the item_id is valid, but doesn't check if it exist
-        # correct usage:  !untrack item_id
-        # example         !untrack 21018
-
-        try:
-            result = re.findall(r"[\w]+",command)
-
-            if (len(result) >= 3):
-                raise Exception('Extra parameters')
-
-            int(result[1]) # check that it is int
-            return result[1]
-
-        except:
-            return ""
-
-
-        return ""
-
-    async def already_tracking(self, user_discord_id, item_id):
-
-        return db.users.find(
-
-                {'DISCORD_ID' : user_discord_id,
-                'INTERESTED_ITEMS': {'$elemMatch':{'ITEM_ID': item_id}}}
-        
-        ).count() == 1
-
-
-    async def user_track_item(self,user_discord_id, item_id, ideal_price, refine_goal):
-
-
-        # insert item into users collection
-
-        user_item_info = {
-
-                'ITEM_ID': item_id,
-                'IDEAL_PRICE': ideal_price,
-                'REFINE_GOAL': refine_goal
-
-        }
-
-        db.users.update(
-            {'DISCORD_ID' : user_discord_id},
-            {'$push': {'INTERESTED_ITEMS': user_item_info}}
-        )
-
-
-        # TODO also insert item into items collection
-        '''
-        if db.items.find(
-            {'ITEM_ID': item_id},
-            {'REFINE' : refine_goal}
-        ).count() == 0:
-
-            item_info = {
-
-                    'ITEM_ID': item_id,
-                    'ITEM_NAME': item_name,
-                    'REFINE' : refine_goal,
-                    'LOWEST_PRICE': -1,
-                    'TRACKING_USERS': [user_discord_id]
-
-            }
-            
-            db.items.insert(item_info)
-        '''
-       
-        return None
-
-    async def user_untrack_item(self, user_discord_id, item_id):
-
-        db.users.update(
-            {'DISCORD_ID' : user_discord_id},
-            { '$pull': {'INTERESTED_ITEMS': {'ITEM_ID' : item_id}}}
-        )
-
-        return None
 
 
 client = MyClient()

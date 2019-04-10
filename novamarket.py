@@ -43,7 +43,7 @@ def check_nova_market(item_id, ideal_price, refine_goal):
 
     return message
 
-def get_item_name(item_id):
+def search_item_name(item_id):
     ''' If item exist return item name, not return Unknown'''
 
 
