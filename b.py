@@ -76,14 +76,13 @@ class MyClient(discord.Client):
 
                     
             # item not already tracking
-            if (await self.duplicate_tracking(user_discord_id, item_id)):
+            if (await self.already_tracking(user_discord_id, item_id)):
                     response = 'You are already tracking ' + item_name
                     await message.author.send(response)
                     return
 
             # DO A CONFIRMATION
-            confirm_text = "Please confirm you want to track " + item_name + " ,refine>= " + str(refine_goal) + " at price <= " + str(ideal_price)
-            confirm_text += "\ntype CONFIRM to confirm, anything else to dismiss"
+            confirm_text = "Please confirm you want to track " + item_name + " ,refine>= " + str(refine_goal) + " at price <= " + str(ideal_price) + "\ntype \"CONFIRM\""
             await message.author.send(confirm_text)
 
                 
@@ -93,7 +92,7 @@ class MyClient(discord.Client):
             if (user_confirm_text.content == "CONFIRM"):
            
                 await self.user_track_item(user_discord_id, item_id, ideal_price, refine_goal)
-                response = 'Nova Tracker is now tracking ' + item_name + ', you will be notified when this item is on sell under ' +  str(ideal_price) + " at refine greater than" + str(refine_goal)
+                response = 'Nova Tracker is now tracking ' + item_name + ', you will be notified when this item is on sell under ' +  str(ideal_price) + " at refine greater than " + str(refine_goal)
                 await message.author.send(response)
                 return
             else:
@@ -123,15 +122,21 @@ class MyClient(discord.Client):
 
             if (item_id == ""):
                 await message.author.send("Invalid Format, Example Usage is \n !untrack item_id\n !track 21018")
+                return
 
             item_name = get_item_name(item_id)
 
             if (item_name == "Unknown"):
                 await message.author.send("Item " + item_id + " do not exist, please double check the ITEM ID")
-            else:
-                await self.user_untrack_item(user_discord_id, item_id)
-                await message.author.send("You are no longer tracking " + item_name)
-                return 
+                return
+
+            if not (await self.already_tracking(user_discord_id, item_id)):
+                await message.author.send("You have not been tracking " + item_name)
+                return
+        
+            await self.user_untrack_item(user_discord_id, item_id)
+            await message.author.send("You are no longer tracking " + item_name)
+            return 
 
 
             
@@ -217,7 +222,7 @@ class MyClient(discord.Client):
         except:
             result[0] = 0 # not valid
 
-
+        print(result)
         return result
 
 
@@ -241,22 +246,22 @@ class MyClient(discord.Client):
 
         return ""
 
-    async def duplicate_tracking(self, user_discord_id, item_id):
+    async def already_tracking(self, user_discord_id, item_id):
 
-        user = db.users.find_one({'DISCORD_ID' : user_discord_id})
+        return db.users.find(
 
-        user_items = user['INTERESTED_ITEMS']
-
-        for item in user_items:
-            if item['ITEM_ID'] == item_id:
-                return True
-
-        return False
+                {'DISCORD_ID' : user_discord_id,
+                'INTERESTED_ITEMS': {'$elemMatch':{'ITEM_ID': item_id}}}
+        
+        ).count() == 1
 
 
     async def user_track_item(self,user_discord_id, item_id, ideal_price, refine_goal):
 
-        item_info = {
+
+        # insert item into users collection
+
+        user_item_info = {
 
                 'ITEM_ID': item_id,
                 'IDEAL_PRICE': ideal_price,
@@ -266,9 +271,29 @@ class MyClient(discord.Client):
 
         db.users.update(
             {'DISCORD_ID' : user_discord_id},
-            {'$push': {'INTERESTED_ITEMS': item_info}}
+            {'$push': {'INTERESTED_ITEMS': user_item_info}}
         )
 
+
+        # TODO also insert item into items collection
+        '''
+        if db.items.find(
+            {'ITEM_ID': item_id},
+            {'REFINE' : refine_goal}
+        ).count() == 0:
+
+            item_info = {
+
+                    'ITEM_ID': item_id,
+                    'ITEM_NAME': item_name,
+                    'REFINE' : refine_goal,
+                    'LOWEST_PRICE': -1,
+                    'TRACKING_USERS': [user_discord_id]
+
+            }
+            
+            db.items.insert(item_info)
+        '''
        
         return None
 
