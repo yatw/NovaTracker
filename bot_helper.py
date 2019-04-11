@@ -56,7 +56,7 @@ async def show_tracking_items(user_discord_id):
     count = 0
     for t in tracking_items:
         count += 1
-        tracking_message += str(count) + ": " + get_item_name(t['ITEM_ID']) + "\t" + "refine >= " + str(t['REFINE_GOAL']) + " ,at <= " + price_format(t['IDEAL_PRICE']) + "\n"
+        tracking_message += str(count) + ": " + get_item_name(t['ITEM_ID']) + " " + t['ITEM_ID'] + "\t" + "refine >= " + str(t['REFINE_GOAL']) + " ,at <= " + price_format(t['IDEAL_PRICE']) + "\n"
 
     return tracking_message
 
@@ -132,13 +132,8 @@ async def user_track_item(user_discord_id, item_id, item_name, ideal_price, refi
     # Adding new item into the database
     # generate document for each refine level
 
-    item_search = {
-        'ITEM_ID' : item_id,
-        'REFINE': refine_goal
-    }
-   
     # if this item not yet in the database, record this item
-    if db.items.find(item_search).count() == 0:
+    if db.items.find({'ITEM_ID' : item_id}).count() == 0:
 
         REFINE_LIST = generate_refine_list(refinable)
         item_info = {
@@ -150,8 +145,6 @@ async def user_track_item(user_discord_id, item_id, item_name, ideal_price, refi
         }
         
         db.items.insert(item_info)
-
-    # TODO insert this item to the corresponding refine level
 
     insert_tracking_users(user_discord_id,item_id, refinable, refine_goal)
         
@@ -203,16 +196,48 @@ def insert_tracking_users(user_discord_id, item_id, refinable, refine_goal):
         )
         
     return None
-   
+
+def remove_tracking_users(user_discord_id, item_id):
+
+    #TODO PULL USER FROM ALL THESE REFINE_LEVEL
+
+    user = db.users.find_one(
+
+        {'DISCORD_ID': user_discord_id,
+         'INTERESTED_ITEMS': {'$elemMatch': { 'ITEM_ID': item_id}}
+        }
+    )
+    refine_goal = user['INTERESTED_ITEMS'][0]['REFINE_GOAL']
+    refine_limit = 20
+
+    if (not db.items.find_one( {'ITEM_ID': item_id})['REFINABLE']):
+        refine_limit = 0
+
+    for refine_level in range(refine_goal, refine_limit+1):
+
+        db.items.update(
+            {
+                'ITEM_ID' : item_id,
+                'REFINE.REFINE_LEVEL' : refine_level
+            },
+            {
+                '$pull': {'REFINE.$.TRACKING_USERS' : user_discord_id}
+            }
+            
+        )
+    return None
+
+ 
 async def user_untrack_item(user_discord_id, item_id):
+
+
+    remove_tracking_users(user_discord_id, item_id)
 
     db.users.update(
         {'DISCORD_ID' : user_discord_id},
         { '$pull': {'INTERESTED_ITEMS': {'ITEM_ID' : item_id}}}
     )
 
-    #TODO PULL USER FROM ALL THESE REFINE_LEVEL
-    
     return None
 
 def can_refine(item_id):
@@ -229,7 +254,7 @@ def get_item_name(item_id):
     if (result is not None):
         return result['ITEM_NAME']
 
-    # if database don't have, check nova websitee
+    # if database don't have, check nova website
     return novamarket.search_item_name(item_id)
 
 def price_format(price):
