@@ -8,8 +8,8 @@ import novamarket
 
 
 async def vertify_track_command(command):
-    # correct usage:  !track item_id ideal_price refine_goal
-    # example         !track 21018 800000000 8
+    # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)
+    # example         !track 21018 8 800000000
 
     try:
         result = re.findall(r"[A-Za-z0-9]+",command)
@@ -18,22 +18,25 @@ async def vertify_track_command(command):
             raise Exception('Extra parameters')
 
         item_id = result[1]
-        ideal_price = int(result[2])
-        if (ideal_price < 0 or ideal_price > 1000000000):
-            raise Exception('Invalid Ideal Price')
-        result[2] = ideal_price
-
-        
-        refine_goal = int(result[3])
-        if (refine_goal < 0 or refine_goal > 20):
-            raise Exception('Invalid Refine Goal')
-        result[3] = refine_goal
-
-            
 
         item_name = get_item_name(item_id)
         if (item_name == "Unknown"):
             raise Exception('Invalid Item ID')
+
+
+        # if refine able check if refine is valid 
+        refine_goal = int(result[2])
+        if (refine_goal < 0 or refine_goal > 20):
+            raise Exception('Invalid Refine Goal')
+        result[2] = refine_goal
+       
+
+        ideal_price = int(result[3])
+        if (ideal_price < 0 or ideal_price > 1000000000):
+            raise Exception('Invalid Ideal Price')
+        result[3] = ideal_price            
+
+
         
         result.append(item_name)
         
@@ -44,7 +47,18 @@ async def vertify_track_command(command):
     return result
 
 
+async def show_tracking_items(user_discord_id):
 
+
+    tracking_message = ""
+    tracking_items = db.users.find_one({'DISCORD_ID' : user_discord_id})['INTERESTED_ITEMS']
+
+    count = 0
+    for t in tracking_items:
+        count += 1
+        tracking_message += str(count) + ": " + get_item_name(t['ITEM_ID']) + "\t" + "refine >= " + str(t['REFINE_GOAL']) + " at " + str(t['IDEAL_PRICE']) + "\n"
+
+    return tracking_message
 
 async def already_registrated(user_discord_id):
     '''Return True if find user in the database'''
@@ -83,7 +97,7 @@ async def vertify_untrack_command(command):
     # example         !untrack 21018
 
     try:
-        result = re.findall(r"[\w]+",command)
+        result = re.findall(r"[A-Za-z0-9]+",command)
 
         if (len(result) >= 3):
             raise Exception('Extra parameters')
@@ -101,6 +115,9 @@ async def vertify_untrack_command(command):
 
 async def user_track_item(user_discord_id, item_id, item_name, ideal_price, refine_goal):
 
+    refinable = novamarket.can_refine(item_id)
+    if (not refinable):
+        refine_goal = 0
 
     # insert item into users collection
 
@@ -109,7 +126,6 @@ async def user_track_item(user_discord_id, item_id, item_name, ideal_price, refi
             'ITEM_ID': item_id,
             'IDEAL_PRICE': ideal_price,
             'REFINE_GOAL': refine_goal
-
     }
     
     db.users.update(
@@ -117,44 +133,81 @@ async def user_track_item(user_discord_id, item_id, item_name, ideal_price, refi
         {'$push': {'INTERESTED_ITEMS': user_item_info}}
     )
 
-    
     # Adding new item into the database
-
+    # generate document for each refine level
 
     item_search = {
         'ITEM_ID' : item_id,
         'REFINE': refine_goal
     }
-
-    
+   
+    # if this item not yet in the database, record this item
     if db.items.find(item_search).count() == 0:
 
-
+        REFINE_LIST = generate_refine_list(refinable)
         item_info = {
 
                 'ITEM_ID': item_id,
                 'ITEM_NAME': item_name,
-                'REFINE' : refine_goal,
-                'LOWEST_PRICE': -1,
-                'TRACKING_USERS': [user_discord_id]
-    
+                'REFINABLE': refinable,
+                'REFINE' : REFINE_LIST
         }
         
         db.items.insert(item_info)
+
+    # TODO insert this item to the corresponding refine level
+
+    insert_tracking_users(user_discord_id,item_id, refinable, refine_goal)
         
-    else:
+    return None
+    
+
+def generate_refine_list(refinable):
+
+    REFINE_LIST = []
+    refine_limit = 0
+    
+    if (refinable):
+        refine_limit = 20
+    
+    for refine_level in range(0,refine_limit+1):
+
+        REFINE_LIST.append(
+
+            {'REFINE_LEVEL': refine_level,
+             'LOWEST_PRICE' : -1,
+             'SELLING_LOCATION' : "",
+             'TRACKING_USERS': []
+             }
+        )
+
+    return REFINE_LIST
+
+def insert_tracking_users(user_discord_id, item_id, refinable, refine_goal):
+
+    keep_track_to = 20
+
+    # if this item not refinable, just put in level 0
+    if (not refinable):
+        refine_goal = 0
+        keep_track_to = 0
+
+    # other refineable items, put from user_refine goal to 20
+    for refine_level in range(refine_goal,keep_track_to+1):
 
         db.items.update(
-            {'ITEM_ID' : item_id,
-             'REFINE' : refine_goal
+            {
+                'ITEM_ID' : item_id,
+                'REFINE.REFINE_LEVEL' : refine_level
             },
-            {'$push': {'TRACKING_USERS': user_discord_id}}
+            {
+                '$push': {'REFINE.$.TRACKING_USERS' : user_discord_id}
+            }
+            
         )
- 
-   
+        
     return None
-
-
+   
 async def user_untrack_item(user_discord_id, item_id):
 
     db.users.update(
@@ -162,7 +215,10 @@ async def user_untrack_item(user_discord_id, item_id):
         { '$pull': {'INTERESTED_ITEMS': {'ITEM_ID' : item_id}}}
     )
 
+    #TODO PULL USER FROM ALL THESE REFINE_LEVEL
+    
     return None
+
 
 
 def get_item_name(item_id):
@@ -179,6 +235,4 @@ def get_item_name(item_id):
     # if database don't have, check nova websitee
     return novamarket.search_item_name(item_id)
 
-
-    
 

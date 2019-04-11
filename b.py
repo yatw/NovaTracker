@@ -42,6 +42,24 @@ class MyClient(discord.Client):
             await message.author.send('You are now registed, you can start tracking items with !track command')
             return
 
+        if message.content.startswith("!showtrack"):
+
+            user_discord_id = message.author.id
+
+            if not(await bot_helper.already_registrated(user_discord_id)):
+                await message.author.send("Please first registred with !register command")
+                return
+                
+
+            
+            tracking_message = await bot_helper.show_tracking_items(user_discord_id)
+
+            if (tracking_message == ""):
+                await message.author.send("You are currently not tracking any item")
+                return
+            
+            await message.author.send("You are currently tracking:\n"+tracking_message)
+            return
 
 
         if message.content.startswith("!track"):
@@ -58,20 +76,23 @@ class MyClient(discord.Client):
                 return
                 
             
-            # correct usage:  !track item_id ideal_price refine_goal
-            # example         !track 21018 800000000 8
+            # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)
+            # example         !track 21018 8 800000000
 
             
             result = await bot_helper.vertify_track_command(message.content)
 
             if (result[0] != 1): # user input is invalid
-                invalid_format_response = "Incorrect Format, Example Usage is \n !track item_id ideal_price refine_goal \n !track 21018 800000000 8 " 
+                invalid_format_response = "Incorrect Format, Example Usage is\n"
+                invalid_format_response += "!track item_id refine_goal ideal_price(K,M,B all work)\n!"
+                invalid_format_response += "track 21018 8 200000000 (put - if refine not appliable)" 
                 await message.author.send(invalid_format_response)
+                return
             
-
+            print(result)
             item_id     = result[1]
-            ideal_price = result[2]
-            refine_goal = result[3]
+            refine_goal = result[2]
+            ideal_price = result[3]
             item_name   = result[4]
 
                     
@@ -92,7 +113,7 @@ class MyClient(discord.Client):
             if (user_confirm_text.content == "CONFIRM"):
            
                 await bot_helper.user_track_item(user_discord_id, item_id, item_name, ideal_price, refine_goal)
-                response = 'Nova Tracker is now tracking ' + item_name + ', you will be notified when this item is on sell under ' +  str(ideal_price) + " at refine greater than " + str(refine_goal)
+                response = 'Now tracking ' + item_name + ', you will be notified here when it is on sell <= ' +  str(ideal_price) + " refine >= " + str(refine_goal)
                 await message.author.send(response)
                 return
             else:
@@ -155,7 +176,7 @@ class MyClient(discord.Client):
             
         # For fun stuff all here
     
-        if message.content.startswith('about'):
+        if message.content.startswith('!about'):
             #me = client.get_user(294974177184579585)
             #await me.send("notifying you")
             await message.author.send("Made with Babyish Love")
