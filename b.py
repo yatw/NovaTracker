@@ -76,8 +76,8 @@ class MyClient(discord.Client):
                 return
                 
             
-            # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)
-            # example         !track 21018 8 800000000
+            # correct usage:  !track item_id refine_goal ideal_price(k,m,b all work)
+            # example         !track 21018 8 200m
 
             
             result = await bot_helper.vertify_track_command(message.content)
@@ -85,11 +85,11 @@ class MyClient(discord.Client):
             if (result[0] != 1): # user input is invalid
                 invalid_format_response = "Incorrect Format, Example Usage is\n"
                 invalid_format_response += "!track item_id refine_goal ideal_price(K,M,B all work)\n!"
-                invalid_format_response += "track 21018 8 200000000 (put - if refine not appliable)" 
+                invalid_format_response += "track 21018 8 200m (put - if refine not appliable)" 
                 await message.author.send(invalid_format_response)
                 return
             
-            print(result)
+            #print(result)
             item_id     = result[1]
             refine_goal = result[2]
             ideal_price = result[3]
@@ -101,9 +101,14 @@ class MyClient(discord.Client):
                     response = 'You are already tracking ' + item_name
                     await message.author.send(response)
                     return
-
+        
+            refinable = bot_helper.can_refine(item_id)
+            if not (refinable):
+                refine_goal = 0
+                
+    
             # DO A CONFIRMATION
-            confirm_text = "Please confirm you want to track " + item_name + " ,refine>= " + str(refine_goal) + " at price <= " + str(ideal_price) + "\ntype \"CONFIRM\""
+            confirm_text = "Please confirm you want to track " + item_name + " ,refine>= " + str(refine_goal) + " at price <= " + bot_helper.price_format(ideal_price) + "\ntype \"CONFIRM\""
             await message.author.send(confirm_text)
 
                 
@@ -112,8 +117,8 @@ class MyClient(discord.Client):
         
             if (user_confirm_text.content == "CONFIRM"):
            
-                await bot_helper.user_track_item(user_discord_id, item_id, item_name, ideal_price, refine_goal)
-                response = 'Now tracking ' + item_name + ', you will be notified here when it is on sell <= ' +  str(ideal_price) + " refine >= " + str(refine_goal)
+                await bot_helper.user_track_item(user_discord_id, item_id, item_name, ideal_price, refinable, refine_goal)
+                response = 'Now tracking ' + item_name + ', you will be notified here when it is on sell <= ' +  bot_helper.price_format(ideal_price) + " refine >= " + str(refine_goal)
                 await message.author.send(response)
                 return
             else:

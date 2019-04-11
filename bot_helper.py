@@ -9,7 +9,7 @@ import novamarket
 
 async def vertify_track_command(command):
     # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)
-    # example         !track 21018 8 800000000
+    # example         !track 21018 8 200m
 
     try:
         result = re.findall(r"[A-Za-z0-9]+",command)
@@ -31,7 +31,7 @@ async def vertify_track_command(command):
         result[2] = refine_goal
        
 
-        ideal_price = int(result[3])
+        ideal_price = int(to_price(result[3]))
         if (ideal_price < 0 or ideal_price > 1000000000):
             raise Exception('Invalid Ideal Price')
         result[3] = ideal_price            
@@ -56,7 +56,7 @@ async def show_tracking_items(user_discord_id):
     count = 0
     for t in tracking_items:
         count += 1
-        tracking_message += str(count) + ": " + get_item_name(t['ITEM_ID']) + "\t" + "refine >= " + str(t['REFINE_GOAL']) + " at " + str(t['IDEAL_PRICE']) + "\n"
+        tracking_message += str(count) + ": " + get_item_name(t['ITEM_ID']) + "\t" + "refine >= " + str(t['REFINE_GOAL']) + " ,at <= " + price_format(t['IDEAL_PRICE']) + "\n"
 
     return tracking_message
 
@@ -113,11 +113,7 @@ async def vertify_untrack_command(command):
 
 
 
-async def user_track_item(user_discord_id, item_id, item_name, ideal_price, refine_goal):
-
-    refinable = novamarket.can_refine(item_id)
-    if (not refinable):
-        refine_goal = 0
+async def user_track_item(user_discord_id, item_id, item_name, ideal_price, refinable, refine_goal):
 
     # insert item into users collection
 
@@ -219,7 +215,8 @@ async def user_untrack_item(user_discord_id, item_id):
     
     return None
 
-
+def can_refine(item_id):
+    return novamarket.can_refine(item_id)
 
 def get_item_name(item_id):
     '''First look through database, if not found, check nova website'''
@@ -234,5 +231,15 @@ def get_item_name(item_id):
 
     # if database don't have, check nova websitee
     return novamarket.search_item_name(item_id)
+
+def price_format(price):
+    # 3500000 to 3,500,000z
+
+    return str('{:,}'.format(price)) + 'z'
+
+
+def to_price(price):
+
+    return price.lower().replace("k","000").replace("m","000000").replace("b","000000000")
 
 
