@@ -26,46 +26,63 @@ def get_nova_page(item_id):
 
 
 # For this given item, check nova market
-# return a dict { refine: lowest price on market}
+# return a dict { refine: [lowest price on market, location]}
 def current_market_info(item_id):
 
-    item_match = []
-
-    global NOVA_MARKET_URL
-
-    soup = get_nova_page(item_id, NOVA_MARKET_URL)
+    
+    soup = get_nova_page(item_id)
 
     table = soup.find('table', {'id': 'itemtable'})
+
+    if table is None:
+        return None
+
     item_list = table.find_all('tr')
 
+    on_sell = {
 
+        0: {'price': -1, 'location': ""},
+        1: {'price': -1, 'location': ""},
+        2: {'price': -1, 'location': ""},
+        3: {'price': -1, 'location': ""},
+        4: {'price': -1, 'location': ""},
+        5: {'price': -1, 'location': ""},
+        6: {'price': -1, 'location': ""},
+        7: {'price': -1, 'location': ""},
+        8: {'price': -1, 'location': ""},
+        9: {'price': -1, 'location': ""},
+        10: {'price': -1, 'location': ""},
+        11: {'price': -1, 'location': ""},
+        12: {'price': -1, 'location': ""},
+        13: {'price': -1, 'location': ""},
+        14: {'price': -1, 'location': ""},
+        15: {'price': -1, 'location': ""},
+        16: {'price': -1, 'location': ""},
+        17: {'price': -1, 'location': ""},
+        18: {'price': -1, 'location': ""},
+        19: {'price': -1, 'location': ""},
+        20: {'price': -1, 'location': ""}
+    }
+    
     for item in item_list[1:]:
 
         item_info = item.find_all('td')
         
         price    = int(item_info[0].text.strip().replace("z","").replace(",",""))
         refine   = int(item_info[1].text.strip().replace("\t","").replace("+",""))
-        enchant  = item_info[2].text
-        location = item_info[3].text
+        #enchant  = item_info[2].text
+        location = item_info[3].text.strip()
 
+        # first on sell item found
+        if (on_sell[refine]['price'] == -1):
+            on_sell[refine]['price'] = price
+            on_sell[refine]['location'] = location
 
-    message = ""      
-
-    return message
-
-
-#current_market_info('4128')
-
-
-
-def search_item_name(item_id):
-    ''' If item exist return item name, not return Unknown'''
-
-    soup = get_nova_page(item_id)
-
-    item_name = soup.find('div', {'class': 'item-name'}).text
-
-    return item_name
+        elif (price < on_sell[refine]['price']):
+            on_sell[refine]['price'] = price
+            on_sell[refine]['location'] = location
+    
+    return on_sell
 
 
 refinable_class = {
@@ -105,8 +122,12 @@ def can_refine(item_id):
     soup = get_nova_page(item_id)
 
     item_description = soup.find('div', {'class': 'item-desc'}).text
+
+    class_des = re.search(r'(?<=Class: )\w+',item_description)
+    if (len(class_des) == 0):
+        return False
     
-    item_class = re.search(r'(?<=Class: )\w+',item_description).group(0)
+    item_class = class_des.group(0)
 
     if (item_class == "Headgear"):
         if (re.search(r'(?<=Location: )\w+',item_description).group(0) == "Upper"):
@@ -118,4 +139,11 @@ def can_refine(item_id):
     return item_class in refinable_class
 
  
+def search_item_name(item_id):
+    ''' If item exist return item name, not return Unknown'''
 
+    soup = get_nova_page(item_id)
+
+    item_name = soup.find('div', {'class': 'item-name'}).text
+
+    return item_name

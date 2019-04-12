@@ -16,15 +16,38 @@ def handle_user_trackings():
     # notify user if there is a match
 
     for item in db.items.find():
-        #print(item['ITEM_NAME'])
-        novamarket.current_market_info(item['ITEM_ID'])
+        print(item['ITEM_NAME'])
+        on_sell = novamarket.current_market_info(item['ITEM_ID'])
+
+        # No item on sell at all (mvp card)
+        if (on_sell == None):
+            continue
 
 
+        # for every refine_level,
+        # for every user in tht refine_level
+        # check if their ideal_price <= on_sell_price
+        # if so notify
+        for data_at_level in item['REFINE']:
 
+            print(data_at_level['REFINE_LEVEL'])
+            for user in data_at_level['TRACKING_USERS']:
 
+                print("This is user", user)
+                #TODO check user onsell price <= ideal price
+                '''
+                user_request = db.users.find(
+
+                    {'DISCORD_ID' : user,
+                    'INTERESTED_ITEMS': {'$elemMatch':{'ITEM_ID': item['ITEM_ID']}}}
+    
+                )
+                print(user_request)
+                '''
+        break
         
     return None
-
+print(handle_user_trackings())
 
 async def vertify_track_command(command):
     # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)
@@ -267,6 +290,16 @@ async def user_untrack_item(user_discord_id, item_id):
     return None
 
 def can_refine(item_id):
+    '''First look through database, if not found, check nova website'''
+
+    result = db.items.find_one({'ITEM_ID' : item_id})
+
+
+    # if database has this item, just return the stored name
+    if (result is not None):
+        return result['REFINABLE']
+
+    # if database don't have, check nova website
     return novamarket.can_refine(item_id)
 
 def get_item_name(item_id):
