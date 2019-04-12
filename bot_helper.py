@@ -7,6 +7,25 @@ from bot_config import db
 import novamarket
 
 
+
+def handle_user_trackings():
+
+    # get all the items in the database
+    # check nova market
+    # get all the tracking users for each refine level
+    # notify user if there is a match
+
+    for item in db.items.find():
+        print(item['ITEM_NAME'])
+        novamarket.current_market_info(item['ITEM_ID'])
+
+
+
+
+        
+    return None
+
+
 async def vertify_track_command(command):
     # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)
     # example         !track 21018 8 200m
@@ -19,6 +38,7 @@ async def vertify_track_command(command):
 
         item_id = result[1]
 
+        #TODO get item name and item class(refinable) in here
         item_name = get_item_name(item_id)
         if (item_name == "Unknown"):
             raise Exception('Invalid Item ID')
@@ -198,8 +218,6 @@ def insert_tracking_users(user_discord_id, item_id, refinable, refine_goal):
     return None
 
 def remove_tracking_users(user_discord_id, item_id):
-
-    #TODO PULL USER FROM ALL THESE REFINE_LEVEL
 
     user = db.users.find_one(
 

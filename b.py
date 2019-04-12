@@ -179,7 +179,7 @@ class MyClient(discord.Client):
             return 
         
             
-        # For fun stuff all here
+        # For fun stuff all here======================================
     
         if message.content.startswith('!about'):
             #me = client.get_user(294974177184579585)
@@ -198,9 +198,9 @@ class MyClient(discord.Client):
         
         while not client.is_closed():
             
-            await asyncio.sleep(5)
+            await asyncio.sleep(30)
 
-            #print('1 cycle')
+            bot_helper.handle_user_trackings()
             
 
 
