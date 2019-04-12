@@ -82,18 +82,21 @@ class MyClient(discord.Client):
             
             result = await bot_helper.vertify_track_command(message.content)
 
-            if (result[0] != 1): # user input is invalid
+            if (result["invalid"]): # user input is invalid
                 invalid_format_response = "Incorrect Format, Example Usage is\n"
                 invalid_format_response += "!track item_id refine_goal ideal_price(K,M,B all work)\n!"
-                invalid_format_response += "track 21018 8 200m (put - if refine not appliable)" 
+                invalid_format_response += "track 21018 8 200m (put 0 if refine not appliable)" 
                 await message.author.send(invalid_format_response)
                 return
             
-            #print(result)
-            item_id     = result[1]
-            refine_goal = result[2]
-            ideal_price = result[3]
-            item_name   = result[4]
+            print(result)
+            item_id     = result["item_id"]
+            item_name   = result["item_name"]
+            refinable   = result["refinable"]
+            refine_goal = result["refine_goal"]
+            ideal_price = result["ideal_price"]
+            
+            
 
                     
             # item not already tracking
@@ -101,10 +104,7 @@ class MyClient(discord.Client):
                     response = 'You are already tracking ' + item_name
                     await message.author.send(response)
                     return
-        
-            refinable = bot_helper.can_refine(item_id)
-            if not (refinable):
-                refine_goal = 0
+    
                 
     
             # DO A CONFIRMATION

@@ -12,10 +12,6 @@ NOVA_MARKET_URL = 'https://www.novaragnarok.com/?module=vending&action=item&id='
 
 
 
-
-
-
-
 def get_nova_page(item_id):
 
     global NOVA_MARKET_URL
@@ -38,7 +34,6 @@ def current_market_info(item_id):
     global NOVA_MARKET_URL
 
     soup = get_nova_page(item_id, NOVA_MARKET_URL)
-    print(soup)
 
     table = soup.find('table', {'id': 'itemtable'})
     item_list = table.find_all('tr')
@@ -73,7 +68,35 @@ def search_item_name(item_id):
     return item_name
 
 
-refinable_class = {'Weapon', 'Armor'}
+refinable_class = {
+    'Headgear',
+    'Armor',
+    'Shield',
+    'Shoes',
+    'Garment',
+    'Dagger',
+    'One-Handed Sword',
+    'Two-Handed Sword',
+    'One-Handed Spear',
+    'Two-Handed Spear',
+    'One-Handed Axe',
+    'Two-Handed Axe',
+    'Mace',
+    'Staff',
+    'Bow',
+    'Knuckle',
+    'Musical Instrument',
+    'Whip',
+    'Book',
+    'Katar',
+    'Revolver',
+    'Rifle',
+    'Gatling Gun',
+    'Shotgun',
+    'Grenade Launcher',
+    'Fuuma Shuriken',
+    'Two-Handed Staff'
+}
 
 
 def can_refine(item_id):
@@ -81,30 +104,18 @@ def can_refine(item_id):
     
     soup = get_nova_page(item_id)
 
-    item_description = soup.find('div', {'class': 'item-desc'})
-    print(item_description)
-
-
-    result = re.findall(r'(Class:)$', "f")
-    print(result)
-    '''
+    item_description = soup.find('div', {'class': 'item-desc'}).text
     
-    table = soup.find('table', {'id': 'itemtable'})
-    print(table
-    item_list = table.find_all('tr')
+    item_class = re.search(r'(?<=Class: )\w+',item_description).group(0)
 
-    item = item_list[0] # there should be only 1 item
-    item_info = item.find_all('td')
-    print(item_info[3].text.strip())
-    # 0 item_id
-    # 1 image
-    # 2 item_name
-    # 3 item_type
-    '''
-    return False
+    if (item_class == "Headgear"):
+        if (re.search(r'(?<=Location: )\w+',item_description).group(0) == "Upper"):
+            return True
+        else:
+            return False
     
+    
+    return item_class in refinable_class
 
-        
-can_refine('15042')
-
+ 
 

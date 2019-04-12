@@ -16,7 +16,7 @@ def handle_user_trackings():
     # notify user if there is a match
 
     for item in db.items.find():
-        print(item['ITEM_NAME'])
+        #print(item['ITEM_NAME'])
         novamarket.current_market_info(item['ITEM_ID'])
 
 
@@ -30,39 +30,47 @@ async def vertify_track_command(command):
     # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)
     # example         !track 21018 8 200m
 
-    try:
-        result = re.findall(r"[A-Za-z0-9]+",command)
 
-        if (len(result) >= 5):
+    result = {}
+    try:
+        tokens = re.findall(r"[A-Za-z0-9]+",command)
+
+        if (len(tokens) > 4):
             raise Exception('Extra parameters')
 
-        item_id = result[1]
+        # TODO
+        # CHECK if item in database, if so, get item name and refinable
 
-        #TODO get item name and item class(refinable) in here
+        item_id = tokens[1]
+
         item_name = get_item_name(item_id)
         if (item_name == "Unknown"):
             raise Exception('Invalid Item ID')
 
 
         # if refine able check if refine is valid 
-        refine_goal = int(result[2])
+        refine_goal = int(tokens[2])
         if (refine_goal < 0 or refine_goal > 20):
             raise Exception('Invalid Refine Goal')
-        result[2] = refine_goal
+        result["refine_goal"] = refine_goal
        
+        refinable = can_refine(item_id)
+        if not (refinable):
+            result["refine_goal"] = 0
+        result["refinable"] = refinable
 
-        ideal_price = int(to_price(result[3]))
+
+        ideal_price = int(to_price(tokens[3]))
         if (ideal_price < 0 or ideal_price > 1000000000):
             raise Exception('Invalid Ideal Price')
-        result[3] = ideal_price            
+        result["ideal_price"] = ideal_price            
 
-
+        result["item_id"] = item_id
+        result["item_name"] = item_name
         
-        result.append(item_name)
-        
-        result[0] = 1 # valid
+        result["invalid"] = False
     except:
-        result[0] = 0 # not valid
+        result["invalid"] = True
 
     return result
 
