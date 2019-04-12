@@ -17,7 +17,7 @@ def handle_user_trackings():
 
     for item in db.items.find():
         print(item['ITEM_NAME'])
-        on_sell = novamarket.current_market_info(item['ITEM_ID'])
+        on_sell = novamarket.current_market_info(item['ITEM_ID'], item['REFINABLE'])
 
         # No item on sell at all (mvp card)
         if (on_sell == None):
@@ -47,7 +47,6 @@ def handle_user_trackings():
         break
         
     return None
-print(handle_user_trackings())
 
 async def vertify_track_command(command):
     # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)

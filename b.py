@@ -200,7 +200,7 @@ class MyClient(discord.Client):
             
             await asyncio.sleep(30)
 
-            bot_helper.handle_user_trackings()
+            #bot_helper.handle_user_trackings()
             
 
 

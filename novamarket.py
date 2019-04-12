@@ -27,7 +27,7 @@ def get_nova_page(item_id):
 
 # For this given item, check nova market
 # return a dict { refine: [lowest price on market, location]}
-def current_market_info(item_id):
+def current_market_info(item_id, refinable):
 
     
     soup = get_nova_page(item_id)
@@ -38,7 +38,7 @@ def current_market_info(item_id):
         return None
 
     item_list = table.find_all('tr')
-
+    
     on_sell = {
 
         0: {'price': -1, 'location': ""},
@@ -63,33 +63,56 @@ def current_market_info(item_id):
         19: {'price': -1, 'location': ""},
         20: {'price': -1, 'location': ""}
     }
-    
-    for item in item_list[1:]:
 
-        item_info = item.find_all('td')
-        
-        price    = int(item_info[0].text.strip().replace("z","").replace(",",""))
-        refine   = int(item_info[1].text.strip().replace("\t","").replace("+",""))
-        #enchant  = item_info[2].text
-        location = item_info[3].text.strip()
+    if (refinable):
 
-        # first on sell item found
-        if (on_sell[refine]['price'] == -1):
-            on_sell[refine]['price'] = price
-            on_sell[refine]['location'] = location
+        # Price, Refine, Addition Properties, Location
+        for item in item_list[1:]:
 
-        elif (price < on_sell[refine]['price']):
-            on_sell[refine]['price'] = price
-            on_sell[refine]['location'] = location
-    
+            item_info = item.find_all('td')
+            
+            price    = int(item_info[0].text.strip().replace("z","").replace(",",""))
+            refine   = int(item_info[1].text.strip().replace("\t","").replace("+",""))
+            #enchant  = item_info[2].text
+            location = item_info[3].text.strip()
+
+            # first on sell item found
+            if (on_sell[refine]['price'] == -1):
+                on_sell[refine]['price'] = price
+                on_sell[refine]['location'] = location
+
+            elif (price < on_sell[refine]['price']):
+                on_sell[refine]['price'] = price
+                on_sell[refine]['location'] = location
+    else:
+
+
+        # Price, Qty, Location
+        for item in item_list[1:]:
+
+            item_info = item.find_all('td')
+            
+            price    = int(item_info[0].text.strip().replace("z","").replace(",",""))
+            #qty   = int(item_info[1].text.strip().replace("\t","").replace("+",""))
+            location = item_info[2].text.strip()
+
+            # first on sell item found
+            if (on_sell[0]['price'] == -1):
+                on_sell[0]['price'] = price
+                on_sell[0]['location'] = location
+
+            elif (price < on_sell[0]['price']):
+                on_sell[0]['price'] = price
+                on_sell[0]['location'] = location  
+            
     return on_sell
-
 
 refinable_class = {
     'Headgear',
     'Armor',
     'Shield',
     'Shoes',
+    'Footgear',
     'Garment',
     'Dagger',
     'One-Handed Sword',
@@ -124,7 +147,7 @@ def can_refine(item_id):
     item_description = soup.find('div', {'class': 'item-desc'}).text
 
     class_des = re.search(r'(?<=Class: )\w+',item_description)
-    if (len(class_des) == 0):
+    if (class_des is None):
         return False
     
     item_class = class_des.group(0)
@@ -137,7 +160,6 @@ def can_refine(item_id):
     
     
     return item_class in refinable_class
-
  
 def search_item_name(item_id):
     ''' If item exist return item name, not return Unknown'''
