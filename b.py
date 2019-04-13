@@ -89,7 +89,7 @@ class MyClient(discord.Client):
                 await message.author.send(invalid_format_response)
                 return
             
-            print(result)
+            #print(result)
             item_id     = result["item_id"]
             item_name   = result["item_name"]
             refinable   = result["refinable"]
@@ -187,9 +187,9 @@ class MyClient(discord.Client):
             await message.author.send("Made with Babyish Love")
 
     
-    async def notify_user(self, user_id):
-        me = client.get_user(294974177184579585)
-        await me.send("notifying you") 
+    async def notify_user(self, user_id, notify_message):
+        user = client.get_user(user_id)
+        await user.send(notify_message) 
 
 
     async def track_nova_market(self):
@@ -199,9 +199,13 @@ class MyClient(discord.Client):
         while not client.is_closed():
             
             await asyncio.sleep(30)
+            print("1 cycle")
 
-            #bot_helper.handle_user_trackings()
+            to_notify = bot_helper.handle_user_trackings()
             
+            for user_id, message in to_notify:
+                await self.notify_user(user_id,message)
+                
 
 
 client = MyClient()

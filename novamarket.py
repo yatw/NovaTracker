@@ -41,27 +41,27 @@ def current_market_info(item_id, refinable):
     
     on_sell = {
 
-        0: {'price': -1, 'location': ""},
-        1: {'price': -1, 'location': ""},
-        2: {'price': -1, 'location': ""},
-        3: {'price': -1, 'location': ""},
-        4: {'price': -1, 'location': ""},
-        5: {'price': -1, 'location': ""},
-        6: {'price': -1, 'location': ""},
-        7: {'price': -1, 'location': ""},
-        8: {'price': -1, 'location': ""},
-        9: {'price': -1, 'location': ""},
-        10: {'price': -1, 'location': ""},
-        11: {'price': -1, 'location': ""},
-        12: {'price': -1, 'location': ""},
-        13: {'price': -1, 'location': ""},
-        14: {'price': -1, 'location': ""},
-        15: {'price': -1, 'location': ""},
-        16: {'price': -1, 'location': ""},
-        17: {'price': -1, 'location': ""},
-        18: {'price': -1, 'location': ""},
-        19: {'price': -1, 'location': ""},
-        20: {'price': -1, 'location': ""}
+        '0': {'price': -1, 'location': ""},
+        '1': {'price': -1, 'location': ""},
+        '2': {'price': -1, 'location': ""},
+        '3': {'price': -1, 'location': ""},
+        '4': {'price': -1, 'location': ""},
+        '5': {'price': -1, 'location': ""},
+        '6': {'price': -1, 'location': ""},
+        '7': {'price': -1, 'location': ""},
+        '8': {'price': -1, 'location': ""},
+        '9': {'price': -1, 'location': ""},
+        '10': {'price': -1, 'location': ""},
+        '11': {'price': -1, 'location': ""},
+        '12': {'price': -1, 'location': ""},
+        '13': {'price': -1, 'location': ""},
+        '14': {'price': -1, 'location': ""},
+        '15': {'price': -1, 'location': ""},
+        '16': {'price': -1, 'location': ""},
+        '17': {'price': -1, 'location': ""},
+        '18': {'price': -1, 'location': ""},
+        '19': {'price': -1, 'location': ""},
+        '20': {'price': -1, 'location': ""}
     }
 
     if (refinable):
@@ -72,7 +72,7 @@ def current_market_info(item_id, refinable):
             item_info = item.find_all('td')
             
             price    = int(item_info[0].text.strip().replace("z","").replace(",",""))
-            refine   = int(item_info[1].text.strip().replace("\t","").replace("+",""))
+            refine   = item_info[1].text.strip().replace("\t","").replace("+","")
             #enchant  = item_info[2].text
             location = item_info[3].text.strip()
 
@@ -97,13 +97,13 @@ def current_market_info(item_id, refinable):
             location = item_info[2].text.strip()
 
             # first on sell item found
-            if (on_sell[0]['price'] == -1):
-                on_sell[0]['price'] = price
-                on_sell[0]['location'] = location
+            if (on_sell['0']['price'] == -1):
+                on_sell['0']['price'] = price
+                on_sell['0']['location'] = location
 
-            elif (price < on_sell[0]['price']):
-                on_sell[0]['price'] = price
-                on_sell[0]['location'] = location  
+            elif (price < on_sell['0']['price']):
+                on_sell['0']['price'] = price
+                on_sell['0']['location'] = location  
             
     return on_sell
 

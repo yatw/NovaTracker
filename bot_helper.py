@@ -7,6 +7,22 @@ from bot_config import db
 import novamarket
 
 
+def price_format(price):
+    # 3500000 to 3,500,000z
+
+    return str('{:,}'.format(price)) + 'z'
+
+
+def to_price(price):
+
+    return price.lower().replace("k","000").replace("m","000000").replace("b","000000000")
+
+
+def construct_notification_message(name, price, location):
+
+    return name + " is on sell " + price_format(price) + " at " + location
+
+
 
 def handle_user_trackings():
 
@@ -15,14 +31,18 @@ def handle_user_trackings():
     # get all the tracking users for each refine level
     # notify user if there is a match
 
+
+    to_notify = []
+
     for item in db.items.find():
-        print(item['ITEM_NAME'])
+        
+        #print(item['ITEM_NAME'])
+        
         on_sell = novamarket.current_market_info(item['ITEM_ID'], item['REFINABLE'])
 
         # No item on sell at all (mvp card)
-        if (on_sell == None):
+        if (on_sell is None):
             continue
-
 
         # for every refine_level,
         # for every user in tht refine_level
@@ -30,23 +50,40 @@ def handle_user_trackings():
         # if so notify
         for data_at_level in item['REFINE']:
 
-            print(data_at_level['REFINE_LEVEL'])
+            refine_level = str(data_at_level['REFINE_LEVEL'])
+
+            if (on_sell[refine_level]['price'] == -1): #refine of this level not on sell
+                continue
+
+            lowest_price = on_sell[refine_level]['price']
+            location = on_sell[refine_level]['location']
+
+            # check for all user in that refine level
             for user in data_at_level['TRACKING_USERS']:
 
-                print("This is user", user)
-                #TODO check user onsell price <= ideal price
-                '''
-                user_request = db.users.find(
+                # check user onsell price <= ideal price
+                
+                user_record = db.users.find_one(
 
                     {'DISCORD_ID' : user,
                     'INTERESTED_ITEMS': {'$elemMatch':{'ITEM_ID': item['ITEM_ID']}}}
     
                 )
-                print(user_request)
-                '''
-        break
-        
-    return None
+                for item_track in user_record['INTERESTED_ITEMS']:
+
+                    if (item_track['ITEM_ID'] == item['ITEM_ID']):
+                    
+                        ideal_price = item_track['IDEAL_PRICE']
+   
+                        if lowest_price <= ideal_price:
+                            message = construct_notification_message(item['ITEM_NAME'], lowest_price, location)
+                            to_notify.append((user,message))
+
+              
+    return to_notify
+
+
+handle_user_trackings()
 
 async def vertify_track_command(command):
     # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)
@@ -314,15 +351,4 @@ def get_item_name(item_id):
 
     # if database don't have, check nova website
     return novamarket.search_item_name(item_id)
-
-def price_format(price):
-    # 3500000 to 3,500,000z
-
-    return str('{:,}'.format(price)) + 'z'
-
-
-def to_price(price):
-
-    return price.lower().replace("k","000").replace("m","000000").replace("b","000000000")
-
 
