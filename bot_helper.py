@@ -37,6 +37,7 @@ def handle_user_trackings():
     for item in db.items.find():
                 
         on_sell = novamarket.current_market_info(item['ITEM_ID'])
+        print(on_sell)
 
         # No item on sell at all (mvp card)
         if (on_sell is None):
@@ -76,7 +77,6 @@ def handle_user_trackings():
 
               
     return to_notify
-
 
 async def vertify_track_command(command):
     # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)

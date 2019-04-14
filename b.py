@@ -115,7 +115,7 @@ class MyClient(discord.Client):
             await message.author.send(confirm_text)
 
                 
-            user_confirm_text = await client.wait_for('message')
+            user_confirm_text = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
             print("User confirm text: " + user_confirm_text.content)
         
             if (user_confirm_text.content == "CONFIRM"):
@@ -203,6 +203,7 @@ class MyClient(discord.Client):
             
             await asyncio.sleep(30)
             print("1 cycle")
+
             
             to_notify = bot_helper.handle_user_trackings()
             
