@@ -29,6 +29,9 @@ class MyClient(discord.Client):
         # don't respond to ourselves
         if message.author == self.user:
             return
+        # don't react to other bots
+        if message.author.bot:
+            return
 
         if message.content.startswith("!register"):
 

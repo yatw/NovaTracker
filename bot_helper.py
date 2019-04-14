@@ -83,7 +83,6 @@ def handle_user_trackings():
     return to_notify
 
 
-handle_user_trackings()
 
 async def vertify_track_command(command):
     # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)
@@ -251,8 +250,6 @@ def generate_refine_list(refinable):
         REFINE_LIST.append(
 
             {'REFINE_LEVEL': refine_level,
-             'LOWEST_PRICE' : -1,
-             'SELLING_LOCATION' : "",
              'TRACKING_USERS': []
              }
         )
