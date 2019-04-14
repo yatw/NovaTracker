@@ -18,9 +18,9 @@ def to_price(price):
     return price.lower().replace("k","000").replace("m","000000").replace("b","000000000")
 
 
-def construct_notification_message(name, price, location):
+def construct_notification_message(name, refine_level, price, location):
 
-    return name + " is on sell " + price_format(price) + " at " + location
+    return name + " " + "+"+refine_level + " is on sell " + price_format(price) + " at " + location
 
 
 
@@ -35,19 +35,14 @@ def handle_user_trackings():
     to_notify = []
 
     for item in db.items.find():
-        
-        #print(item['ITEM_NAME'])
-        
-        on_sell = novamarket.current_market_info(item['ITEM_ID'], item['REFINABLE'])
+                
+        on_sell = novamarket.current_market_info(item['ITEM_ID'])
 
         # No item on sell at all (mvp card)
         if (on_sell is None):
             continue
 
-        # for every refine_level,
-        # for every user in tht refine_level
-        # check if their ideal_price <= on_sell_price
-        # if so notify
+        # for every refine_level
         for data_at_level in item['REFINE']:
 
             refine_level = str(data_at_level['REFINE_LEVEL'])
@@ -76,12 +71,11 @@ def handle_user_trackings():
                         ideal_price = item_track['IDEAL_PRICE']
    
                         if lowest_price <= ideal_price:
-                            message = construct_notification_message(item['ITEM_NAME'], lowest_price, location)
+                            message = construct_notification_message(item['ITEM_NAME'], refine_level, lowest_price, location)
                             to_notify.append((user,message))
 
               
     return to_notify
-
 
 
 async def vertify_track_command(command):

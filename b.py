@@ -203,12 +203,12 @@ class MyClient(discord.Client):
             
             await asyncio.sleep(30)
             print("1 cycle")
-
+            
             to_notify = bot_helper.handle_user_trackings()
             
             for user_id, message in to_notify:
                 await self.notify_user(user_id,message)
-                
+            
 
 
 client = MyClient()

@@ -27,7 +27,7 @@ def get_nova_page(item_id):
 
 # For this given item, check nova market
 # return a dict { refine: [lowest price on market, location]}
-def current_market_info(item_id, refinable):
+def current_market_info(item_id):
 
     
     soup = get_nova_page(item_id)
@@ -37,7 +37,6 @@ def current_market_info(item_id, refinable):
     if table is None:
         return None
 
-    item_list = table.find_all('tr')
     
     on_sell = {
 
@@ -64,46 +63,38 @@ def current_market_info(item_id, refinable):
         '20': {'price': -1, 'location': ""}
     }
 
-    if (refinable):
-
-        # Price, Refine, Addition Properties, Location
-        for item in item_list[1:]:
-
-            item_info = item.find_all('td')
-            
-            price    = int(item_info[0].text.strip().replace("z","").replace(",",""))
-            refine   = item_info[1].text.strip().replace("\t","").replace("+","")
-            #enchant  = item_info[2].text
-            location = item_info[3].text.strip()
-
-            # first on sell item found
-            if (on_sell[refine]['price'] == -1):
-                on_sell[refine]['price'] = price
-                on_sell[refine]['location'] = location
-
-            elif (price < on_sell[refine]['price']):
-                on_sell[refine]['price'] = price
-                on_sell[refine]['location'] = location
-    else:
 
 
-        # Price, Qty, Location
-        for item in item_list[1:]:
 
-            item_info = item.find_all('td')
-            
-            price    = int(item_info[0].text.strip().replace("z","").replace(",",""))
-            #qty   = int(item_info[1].text.strip().replace("\t","").replace("+",""))
-            location = item_info[2].text.strip()
+    item_list = table.find_all('tr')
 
-            # first on sell item found
-            if (on_sell['0']['price'] == -1):
-                on_sell['0']['price'] = price
-                on_sell['0']['location'] = location
+    headers = item_list[0].find_all('th')
 
-            elif (price < on_sell['0']['price']):
-                on_sell['0']['price'] = price
-                on_sell['0']['location'] = location  
+    # key contain, Item, Price, Refine, Additional Properties, Location
+    # value is the column number in the table
+    table_index = {}
+    for count, header in enumerate(headers,0):
+        table_index[header.text] = count
+
+    
+    for item in item_list[1:]:
+
+        item_info = item.find_all('td')
+
+        
+        price    = int(item_info[table_index['Price']].text.strip().replace("z","").replace(",",""))
+        refine   = item_info[table_index['Refine']].text.strip().replace("\t","").replace("+","")
+        location = item_info[table_index['Location']].text.strip()
+
+        # first on sell item found
+        if (on_sell[refine]['price'] == -1):
+            on_sell[refine]['price'] = price
+            on_sell[refine]['location'] = location
+
+        elif (price < on_sell[refine]['price']):
+            on_sell[refine]['price'] = price
+            on_sell[refine]['location'] = location
+        
             
     return on_sell
 
