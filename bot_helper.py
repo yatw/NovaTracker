@@ -37,7 +37,6 @@ def handle_user_trackings():
     for item in db.items.find():
                 
         on_sell = novamarket.current_market_info(item['ITEM_ID'])
-        print(on_sell)
 
         # No item on sell at all (mvp card)
         if (on_sell is None):
