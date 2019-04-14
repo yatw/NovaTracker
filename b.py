@@ -78,6 +78,10 @@ class MyClient(discord.Client):
                 await message.author.send("Please first registred with !register command")
                 return
                 
+            if (await bot_helper.count_tracking_item(user_discord_id) >= 5):
+                await message.author.send("You are at your maximum tracking limit (5), try to untrack some items.")
+                return
+
             
             # correct usage:  !track item_id refine_goal ideal_price(k,m,b all work)
             # example         !track 21018 8 200m

@@ -75,15 +75,18 @@ def current_market_info(item_id):
     table_index = {}
     for count, header in enumerate(headers,0):
         table_index[header.text] = count
-
     
     for item in item_list[1:]:
 
         item_info = item.find_all('td')
 
+
+        if ('Refine' in table_index):
+            refine = item_info[table_index['Refine']].text.strip().replace("\t","").replace("+","")
+        else:
+            refine = '0'
         
         price    = int(item_info[table_index['Price']].text.strip().replace("z","").replace(",",""))
-        refine   = item_info[table_index['Refine']].text.strip().replace("\t","").replace("+","")
         location = item_info[table_index['Location']].text.strip()
 
         # first on sell item found

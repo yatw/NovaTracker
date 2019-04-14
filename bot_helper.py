@@ -89,8 +89,7 @@ async def vertify_track_command(command):
         if (len(tokens) > 4):
             raise Exception('Extra parameters')
 
-        # TODO
-        # CHECK if item in database, if so, get item name and refinable
+        # CHECK if item in database, if so, get item name and refinable, else ping nova
 
         item_id = tokens[1]
 
@@ -178,7 +177,7 @@ async def vertify_untrack_command(command):
     try:
         result = re.findall(r"[A-Za-z0-9]+",command)
 
-        if (len(result) >= 3):
+        if (len(result) > 2):
             raise Exception('Extra parameters')
 
         int(result[1]) # check that it is int
@@ -191,6 +190,9 @@ async def vertify_untrack_command(command):
     return ""
 
 
+async def count_tracking_item(user_discord_id):
+
+    return len(db.users.find_one({'DISCORD_ID': user_discord_id})['INTERESTED_ITEMS'])
 
 async def user_track_item(user_discord_id, item_id, item_name, ideal_price, refinable, refine_goal):
 
