@@ -86,9 +86,14 @@ class MyClient(discord.Client):
             # correct usage:  !track item_id refine_goal ideal_price(k,m,b all work)
             # example         !track 21018 8 200m
 
-
+        
             # parse the user input into tokens and return as a dictionary
-            result = await bot_helper.parse_track_command(message.content)
+
+            try:
+                result = await bot_helper.parse_track_command(message.content)
+            except Exception as e:
+                await message.author.send(str(e) + " Please try again later")
+                return       
 
             if (result["invalid"]): # user input is invalid
                 invalid_format_response = "Incorrect Format, Example Usage is\n"
@@ -152,7 +157,12 @@ class MyClient(discord.Client):
             # correct usage:  !untrack item_id
             # example         !untrack 21018
 
-            item_id = await bot_helper.parse_untrack_command(message.content)
+
+            try:
+                item_id = await bot_helper.parse_untrack_command(message.content)
+            except Exception as e:
+                await message.author.send(str(e) + " Please try again later")
+                return       
 
             if (item_id == ""):
                 await message.author.send("Invalid Format, Example Usage is \n !untrack item_id\n !track 21018")
@@ -205,16 +215,19 @@ class MyClient(discord.Client):
         
         while not client.is_closed():
             
-            await asyncio.sleep(900) # run every 15 minutes
+            await asyncio.sleep(900) # 900s = run every 15 minutes
             print("starting cycle")
 
+            try:
+                to_notify = bot_helper.handle_user_trackings()
             
-            to_notify = bot_helper.handle_user_trackings()
+                for user_id, message in to_notify:
+                    await self.notify_user(user_id,message)
+                print("complete cycle")
+                    
+            except Exception as e:
+                print(str(e))           
             
-            for user_id, message in to_notify:
-                await self.notify_user(user_id,message)
-            
-            print("complete cycle")
 
 client = MyClient()
 client.run(DISCORD_TOKEN)

@@ -11,19 +11,22 @@ NOVA_MARKET_URL = 'https://www.novaragnarok.com/?module=vending&action=item&id='
 # https://stackoverflow.com/questions/16627227/http-error-403-in-python-3-web-scraping
 
 
-
+        
 def get_nova_page(item_id):
 
     global NOVA_MARKET_URL
     
     nova_url = NOVA_MARKET_URL + item_id
 
-    req = Request(nova_url, headers={'User-Agent': 'Mozilla/5.0'})
-    page = urlopen(req).read()
-    soup = BeautifulSoup(page, 'html.parser')
+    try:
+        req = Request(nova_url, headers={'User-Agent': 'Mozilla/5.0'})
+        page = urlopen(req).read()
+        soup = BeautifulSoup(page, 'html.parser')
+    except:
+        raise Exception("Cannot connect to Nova")
+        return
 
     return soup
-
 
 # For this given item, check nova market
 # return a dict { refine: [lowest price on market, location]}
