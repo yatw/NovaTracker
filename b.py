@@ -86,8 +86,9 @@ class MyClient(discord.Client):
             # correct usage:  !track item_id refine_goal ideal_price(k,m,b all work)
             # example         !track 21018 8 200m
 
-            
-            result = await bot_helper.vertify_track_command(message.content)
+
+            # parse the user input into tokens and return as a dictionary
+            result = await bot_helper.parse_track_command(message.content)
 
             if (result["invalid"]): # user input is invalid
                 invalid_format_response = "Incorrect Format, Example Usage is\n"
@@ -151,7 +152,7 @@ class MyClient(discord.Client):
             # correct usage:  !untrack item_id
             # example         !untrack 21018
 
-            item_id = await bot_helper.vertify_untrack_command(message.content)
+            item_id = await bot_helper.parse_untrack_command(message.content)
 
             if (item_id == ""):
                 await message.author.send("Invalid Format, Example Usage is \n !untrack item_id\n !track 21018")
@@ -189,8 +190,7 @@ class MyClient(discord.Client):
         # For fun stuff all here======================================
     
         if message.content.startswith('!about'):
-            #me = client.get_user(294974177184579585)
-            #await me.send("notifying you")
+
             await message.author.send("Made with Babyish Love")
 
     
@@ -205,8 +205,8 @@ class MyClient(discord.Client):
         
         while not client.is_closed():
             
-            await asyncio.sleep(30)
-            print("1 cycle")
+            await asyncio.sleep(900) # run every 15 minutes
+            print("starting cycle")
 
             
             to_notify = bot_helper.handle_user_trackings()
@@ -214,7 +214,7 @@ class MyClient(discord.Client):
             for user_id, message in to_notify:
                 await self.notify_user(user_id,message)
             
-
+            print("complete cycle")
 
 client = MyClient()
 client.run(DISCORD_TOKEN)
