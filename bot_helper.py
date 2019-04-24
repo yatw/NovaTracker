@@ -50,9 +50,13 @@ def to_price(price):
     return price.lower().replace("k","000").replace("m","000000").replace("b","000000000")
 
 
-def construct_notification_message(name, refine_level, price, location):
+def construct_notification_message(item_name, item_id, refine_level, price, location):
 
-    return name + " " + "+" + refine_level + " is on sell " + price_format(price) + " at " + location
+    notification_message  = "**" + item_name + " +" + refine_level + "**" + " (" + item_id + ")" 
+    notification_message += " is on sell " +  "**" + price_format(price) +  "**"
+    notification_message += " at " +  "**" + location + "**" 
+
+    return notification_message
 
 
 # Handle Register related functions ========================================================================
@@ -85,9 +89,9 @@ async def show_tracking_items(user_discord_id):
     count = 0
     for item_id in tracking_items:
         count += 1
-        tracking_message += str(count) + ": " + get_item_name(item_id) + " " + "(" + item_id + ")" + "\t"
-        tracking_message += "refine >= " + str(tracking_items[item_id]['REFINE_GOAL'])
-        tracking_message += " ,sell price <= " + price_format(tracking_items[item_id]['IDEAL_PRICE']) + "\n"
+        tracking_message += str(count) + ": " + "**"+ get_item_name(item_id) +"**"+ " " + "(" + item_id + ")" + "\t"
+        tracking_message += "refine >= " + "**"+str(tracking_items[item_id]['REFINE_GOAL'])+"**"
+        tracking_message += " ,sell price <= " + "**"+price_format(tracking_items[item_id]['IDEAL_PRICE'])+ "**" + "\n"
 
     return tracking_message
 
@@ -342,7 +346,7 @@ def handle_user_trackings():
                 ideal_price = db.users.find_one({'DISCORD_ID' : tracking_user})['INTERESTED_ITEMS'][item['ITEM_ID']]['IDEAL_PRICE']
              
                 if lowest_price <= ideal_price:
-                    message = construct_notification_message(item['ITEM_NAME'], refine_level, lowest_price, location)
+                    message = construct_notification_message(item['ITEM_NAME'], item['ITEM_ID'], refine_level, lowest_price, location)
                     to_notify.append((tracking_user,message))
 
               

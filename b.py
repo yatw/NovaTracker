@@ -6,6 +6,13 @@ from discord.ext import commands
 from bot_config import DISCORD_TOKEN
 import bot_helper
 
+error_color = 0xFF5C5C
+success_color = 0x00BF00
+warning_color = 0xF4F442
+feedback_color = 0x6FA8DC
+notify_color = 0xFF9900
+
+
 
 #https://github.com/Rapptz/discord.py
 class MyClient(discord.Client):
@@ -36,13 +43,16 @@ class MyClient(discord.Client):
         if message.content.startswith("!register"):
 
             user_discord_id = message.author.id
-
+            
+            
             if (await bot_helper.already_registrated(user_discord_id)):
-                await message.author.send('You have already registed!')
+                registration_fail = discord.Embed(title="Registration Fail", description="You have already registered", color=error_color) 
+                await message.author.send(embed=registration_fail)
                 return
             
             await bot_helper.user_register(user_discord_id)
-            await message.author.send('You are now registed, you can start tracking items with !track command')
+            registration_success = discord.Embed(title="Registration Success", description="you can start tracking items with !track command", color=success_color)
+            await message.author.send(embed=registration_success)
             return
 
         if message.content.startswith("!showtrack"):
@@ -50,7 +60,8 @@ class MyClient(discord.Client):
             user_discord_id = message.author.id
 
             if not(await bot_helper.already_registrated(user_discord_id)):
-                await message.author.send("Please first registred with !register command")
+                need_registration = discord.Embed(title="Need Registration", description="Please register with !register command", color=error_color) 
+                await message.author.send(embed=need_registration)
                 return
                 
 
@@ -58,10 +69,12 @@ class MyClient(discord.Client):
             tracking_message = await bot_helper.show_tracking_items(user_discord_id)
 
             if (tracking_message == ""):
-                await message.author.send("You are currently not tracking any item")
+                nothing_on_track = discord.Embed(title="No items tracking", description="You are currently not tracking any item", color=feedback_color) 
+                await message.author.send(embed=nothing_on_track)
                 return
-            
-            await message.author.send("You are currently tracking:\n"+tracking_message)
+
+            tracking_result = discord.Embed(title="You are currently tracking:", description=tracking_message, color=feedback_color)
+            await message.author.send(embed=tracking_result)
             return
 
 
@@ -75,11 +88,13 @@ class MyClient(discord.Client):
             
             user_discord_id = message.author.id
             if not(await bot_helper.already_registrated(user_discord_id)):
-                await message.author.send("Please first registred with !register command")
+                need_registration = discord.Embed(title="Need Registration", description="Please register with !register command", color=error_color) 
+                await message.author.send(embed=need_registration)
                 return
                 
             if (await bot_helper.count_tracking_item(user_discord_id) >= 5):
-                await message.author.send("You are at your maximum tracking limit (5), try to untrack some items.")
+                max_tracking = discord.Embed(title="Maximum tracking limit", description="You are at your maximum tracking limit (5), try to untrack some items.", color=warning_color)
+                await message.author.send(embed=max_tracking)
                 return
 
             
@@ -96,10 +111,11 @@ class MyClient(discord.Client):
                 return       
 
             if (result["invalid"]): # user input is invalid
-                invalid_format_response = "Incorrect Format, Example Usage is\n"
+                invalid_format_response = "Example Usage is\n"
                 invalid_format_response += "!track item_id refine_goal ideal_price(K,M,B all work)\n!"
-                invalid_format_response += "track 21018 8 200m (put 0 if refine not appliable)" 
-                await message.author.send(invalid_format_response)
+                invalid_format_response += "track 21018 8 200m (put 0 if refine not appliable)"
+                invalid_tracking_input = discord.Embed(title="Incorrect Format", description=invalid_format_response, color=warning_color)
+                await message.author.send(embed=invalid_tracking_input)
                 return
             
             #print(result)
@@ -114,28 +130,38 @@ class MyClient(discord.Client):
                     
             # item not already tracking
             if (await bot_helper.already_tracking(user_discord_id, item_id)):
-                    response = 'You are already tracking ' + item_name
-                    await message.author.send(response)
+                    dobule_tracking_response = 'You are already tracking ' + '**' + item_name + '**' + "(" + item_id + ")"
+                    double_tracking = discord.Embed(title="Already tracking", description=dobule_tracking_response, color=warning_color)
+                    await message.author.send(embed=double_tracking)
                     return
     
                 
     
             # DO A CONFIRMATION
-            confirm_text = "Please confirm you want to track " + item_name + " ,refine>= " + str(refine_goal) + " at price <= " + bot_helper.price_format(ideal_price) + "\ntype \"CONFIRM\""
-            await message.author.send(confirm_text)
+            confirm_text = "Please type __**CONFIRM**__ to track:"
+            confirm_track = discord.Embed(title=confirm_text, color=feedback_color)
+            confirm_track.add_field(name="Item", value='**'+item_name+'**', inline=True)
+            confirm_track.add_field(name="refine >=", value='**'+str(refine_goal)+'**', inline=True)
+            confirm_track.add_field(name="price <=", value='**'+bot_helper.price_format(ideal_price)+'**', inline=True)
+            await message.author.send(embed=confirm_track)
 
                 
             user_confirm_text = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
-            print("User confirm text: " + user_confirm_text.content)
+            #print("User confirm text: " + user_confirm_text.content)
         
             if (user_confirm_text.content == "CONFIRM"):
            
                 await bot_helper.user_track_item(user_discord_id, item_id, item_name, ideal_price, refinable, refine_goal)
-                response = 'Now tracking ' + item_name + ', you will be notified here when it is on sell <= ' +  bot_helper.price_format(ideal_price) + " refine >= " + str(refine_goal)
-                await message.author.send(response)
+
+                tracking_success_response = 'Now tracking ' + '**'+ item_name + '**'+', you will be notified here when it is on sell <= ' + '**' + bot_helper.price_format(ideal_price) + '**' + " refine >= " + '**' + str(refine_goal) +'**' 
+                tracking_success = discord.Embed(title="Tracking Success", description=tracking_success_response, color=success_color)
+                
+                await message.author.send(embed=tracking_success)
                 return
             else:
-                await message.author.send('Dismiss Tracking request for ' + item_name)
+
+                dismiss_tracking = discord.Embed(title="Dismiss", description='Dismiss Tracking request for ' + item_name, color=warning_color)
+                await message.author.send(embed=dismiss_tracking)
                 return
             
             return None
@@ -150,7 +176,8 @@ class MyClient(discord.Client):
 
             user_discord_id = message.author.id
             if not(await bot_helper.already_registrated(user_discord_id)):
-                await message.author.send("Please first registred with !register command")
+                need_registration = discord.Embed(title="Need Registration", description="Please register with !register command", color=error_color) 
+                await message.author.send(embed=need_registration)
                 return
                 
             
@@ -164,27 +191,37 @@ class MyClient(discord.Client):
                 await message.author.send(str(e) + " Please try again later")
                 return       
 
-            if (item_id == ""):
-                await message.author.send("Invalid Format, Example Usage is \n !untrack item_id\n !track 21018")
+            if (item_id == ""): # untrack input is incorrect
+                invalid_format_response = "Example Usage is \n !untrack item_id\n !track 21018"
+                invalid_untracking_input = discord.Embed(title="Invalid Format", description=invalid_format_response, color=warning_color)
+                await message.author.send(embed=invalid_tracking_input)
                 return
 
             item_name = bot_helper.get_item_name(item_id)
 
             if (item_name == "Unknown"):
-                await message.author.send("Item " + item_id + " do not exist, please double check the ITEM ID")
+                item_not_found_response = "Item " + item_id + " do not exist, please double check the ITEM ID"
+                item_not_found = discord.Embed(title="Item Not Found", description=item_not_found_response, color=warning_color)
+                await message.author.send(embed=item_not_found)
                 return
 
             if not (await bot_helper.already_tracking(user_discord_id, item_id)):
-                await message.author.send("You have not been tracking " + item_name)
+
+                not_tracking_response = "You have not been tracking " + "**" +item_name + "**" + "\nUntrack Fail"
+                not_tracking = discord.Embed(title="Not Tracking", description=not_tracking_response, color=warning_color)                
+                await message.author.send(embed=not_tracking)
                 return
         
             await bot_helper.user_untrack_item(user_discord_id, item_id)
-            await message.author.send("You are no longer tracking " + item_name)
+
+            untrack_success_response = "You are no longer tracking " + "**" + item_name + "**"
+            untrack_success = discord.Embed(title="Successfully Untrack", description=untrack_success_response, color=success_color)                
+            await message.author.send(embed=untrack_success)
+            
             return 
 
 
             
-            await message.author.send("Invalid Format, Example Usage is \n !untrack item_id\n !track 21018")
 
         if message.content.startswith('!getname'):
 
@@ -206,7 +243,9 @@ class MyClient(discord.Client):
     
     async def notify_user(self, user_id, notify_message):
         user = client.get_user(user_id)
-        await user.send(notify_message) 
+
+        onsell_notification = discord.Embed(title="Item on sell", description=notify_message, color=notify_color)
+        await user.send(embed=onsell_notification) 
 
 
     async def track_nova_market(self):
@@ -215,7 +254,7 @@ class MyClient(discord.Client):
         
         while not client.is_closed():
             
-            await asyncio.sleep(900) # 900s = run every 15 minutes
+            await asyncio.sleep(20) # 900s = run every 15 minutes
             print("starting cycle")
 
             try:
