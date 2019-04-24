@@ -23,7 +23,7 @@ def get_nova_page(item_id):
         page = urlopen(req).read()
         soup = BeautifulSoup(page, 'html.parser')
     except:
-        raise Exception("Cannot connect to Nova")
+        raise Exception("Nova Down")
         return
 
     return soup

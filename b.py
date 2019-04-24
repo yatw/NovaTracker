@@ -104,17 +104,24 @@ class MyClient(discord.Client):
         
             # parse the user input into tokens and return as a dictionary
 
-            try:
-                result = await bot_helper.parse_track_command(message.content)
-            except Exception as e:
-                await message.author.send(str(e) + " Please try again later")
-                return       
+            result = await bot_helper.parse_track_command(message.content)
+       
 
             if (result["invalid"]): # user input is invalid
-                invalid_format_response = "Example Usage is\n"
+
+                problem_detail = result["problem"]
+         
+                if ( problem_detail == "Nova Down"):
+                    nova_down_respond = discord.Embed(title="Cannot Connect to Nova at the Moment", description="Please try again some other time", color=error_color)
+                    await message.author.send(embed=nova_down_respond)
+                    return
+
+
+                
+                invalid_format_response = "Example Usage is: \n"
                 invalid_format_response += "!track item_id refine_goal ideal_price(K,M,B all work)\n!"
                 invalid_format_response += "track 21018 8 200m (put 0 if refine not appliable)"
-                invalid_tracking_input = discord.Embed(title="Incorrect Format", description=invalid_format_response, color=warning_color)
+                invalid_tracking_input = discord.Embed(title=problem_detail, description=invalid_format_response, color=warning_color)
                 await message.author.send(embed=invalid_tracking_input)
                 return
             
@@ -131,7 +138,7 @@ class MyClient(discord.Client):
             # item not already tracking
             if (await bot_helper.already_tracking(user_discord_id, item_id)):
                     dobule_tracking_response = 'You are already tracking ' + '**' + item_name + '**' + "(" + item_id + ")"
-                    double_tracking = discord.Embed(title="Already tracking", description=dobule_tracking_response, color=warning_color)
+                    double_tracking = discord.Embed(title="Tracking Fail", description=dobule_tracking_response, color=warning_color)
                     await message.author.send(embed=double_tracking)
                     return
     
@@ -192,37 +199,37 @@ class MyClient(discord.Client):
             # example         !untrack 21018
 
 
-            try:
-                item_id = await bot_helper.parse_untrack_command(message.content)
-            except Exception as e:
-                await message.author.send(str(e) + " Please try again later")
-                return       
+            result = await bot_helper.parse_untrack_command(message.content)
 
-            if (item_id == ""): # untrack input is incorrect
-                invalid_format_response = "Example Usage is \n !untrack item_id\n !untrack 21018"
-                invalid_untracking_input = discord.Embed(title="Invalid Format", description=invalid_format_response, color=warning_color)
+            if (result["invalid"]): # untrack input is incorrect
+
+                problem_detail = result["problem"]
+         
+                if ( problem_detail == "Nova Down"):
+                    nova_down_respond = discord.Embed(title="Cannot Connect to Nova at the Moment", description="Please try again some other time", color=error_color)
+                    await message.author.send(embed=nova_down_respond)
+                    return
+
+                
+                invalid_format_response = "Example Usage is: \n !untrack item_id\n !untrack 21018"
+                invalid_untracking_input = discord.Embed(title=problem_detail, description=invalid_format_response, color=warning_color)
                 await message.author.send(embed=invalid_untracking_input)
                 return
 
-            item_name = bot_helper.get_item_name(item_id)
-
-            if (item_name == "Unknown"):
-                item_not_found_response = "Item " + item_id + " do not exist, please double check the ITEM ID"
-                item_not_found = discord.Embed(title="Item Not Found", description=item_not_found_response, color=warning_color)
-                await message.author.send(embed=item_not_found)
-                return
+            item_id = result["item_id"]
+            item_name = result["item_name"]
 
             if not (await bot_helper.already_tracking(user_discord_id, item_id)):
 
-                not_tracking_response = "You have not been tracking " + "**" +item_name + "**" + "\nUntrack Fail"
-                not_tracking = discord.Embed(title="Not Tracking", description=not_tracking_response, color=warning_color)                
+                not_tracking_response = "You have not been tracking " + "**" +item_name + "**"
+                not_tracking = discord.Embed(title="Untrack Fail", description=not_tracking_response, color=warning_color)                
                 await message.author.send(embed=not_tracking)
                 return
         
             await bot_helper.user_untrack_item(user_discord_id, item_id)
 
             untrack_success_response = "You are no longer tracking " + "**" + item_name + "**"
-            untrack_success = discord.Embed(title="Successfully Untrack", description=untrack_success_response, color=success_color)                
+            untrack_success = discord.Embed(title="Untrack Success", description=untrack_success_response, color=success_color)                
             await message.author.send(embed=untrack_success)
             
             return 

@@ -8,6 +8,7 @@ import novamarket
 
 
 # information Functions ================================================================================
+# both might need nova connection
 
 def can_refine(item_id):
     '''First look through database, if not found, check nova website'''
@@ -117,13 +118,13 @@ async def parse_track_command(command):
         tokens = re.findall(r"[A-Za-z0-9]+",command)
 
         if (len(tokens) > 4):
-            raise Exception('Extra parameters')
+            raise Exception('Extra tokens')
 
         # CHECK if item in database, if so, get item name and refinable, else ping nova
 
         item_id = tokens[1]
 
-        item_name = get_item_name(item_id)
+        item_name = get_item_name(item_id) # get_item_name can fail if Nova is down
         if (item_name == "Unknown"):
             raise Exception('Invalid Item ID')
 
@@ -131,26 +132,28 @@ async def parse_track_command(command):
         # if refine able check if refine is valid 
         refine_goal = int(tokens[2])
         if (refine_goal < 0 or refine_goal > 20):
-            raise Exception('Invalid Refine Goal')
+            raise Exception('Valid refine is 0 to 20')
         result["refine_goal"] = refine_goal
        
-        refinable = can_refine(item_id)
+        refinable = can_refine(item_id) # can_refine can fail if Nova is down
         if not (refinable):
             result["refine_goal"] = 0
         result["refinable"] = refinable
 
 
         ideal_price = int(to_price(tokens[3]))
-        if (ideal_price < 0 or ideal_price > 1000000000):
-            raise Exception('Invalid Ideal Price')
+        if (ideal_price < 1 or ideal_price > 1000000000):
+            raise Exception('Valid price range is 1 to 1,000,000,000')
         result["ideal_price"] = ideal_price            
 
         result["item_id"] = item_id
         result["item_name"] = item_name
         
         result["invalid"] = False
-    except:
+    except Exception as e:
         result["invalid"] = True
+        result["problem"] = str(e)
+        
 
     return result
 
@@ -247,20 +250,31 @@ async def parse_untrack_command(command):
     # correct usage:  !untrack item_id
     # example         !untrack 21018
 
+    result = {}
     try:
-        result = re.findall(r"[A-Za-z0-9]+",command)
+        tokens = re.findall(r"[A-Za-z0-9]+",command)
 
-        if (len(result) > 2):
-            raise Exception('Extra parameters')
+        if (len(tokens) > 2):
+            raise Exception('Extra tokens')
 
-        int(result[1]) # check that it is int
-        return result[1]
+        item_id = tokens[1]
 
-    except:
-        return ""
+        item_name = get_item_name(item_id)
+        if item_name == "Unknown":
+            raise Exception('Item Not Found')
+    
+        result["item_id"] = item_id
+        result["item_name"] = item_name
+        result["invalid"] = False
+        return result
+
+    except Exception as e:
+        result["invalid"] = True
+        result["problem"] = str(e)
+        return result
 
 
-    return ""
+    return result
 
 
 async def user_untrack_item(user_discord_id, item_id):
