@@ -141,7 +141,10 @@ class MyClient(discord.Client):
             confirm_text = "Please type __**CONFIRM**__ to track:"
             confirm_track = discord.Embed(title=confirm_text, color=feedback_color)
             confirm_track.add_field(name="Item", value='**'+item_name+'**', inline=True)
-            confirm_track.add_field(name="refine >=", value='**'+str(refine_goal)+'**', inline=True)
+
+            if (refinable):
+                confirm_track.add_field(name="refine >=", value='**'+str(refine_goal)+'**', inline=True)
+                
             confirm_track.add_field(name="price <=", value='**'+bot_helper.price_format(ideal_price)+'**', inline=True)
             await message.author.send(embed=confirm_track)
 
@@ -153,7 +156,11 @@ class MyClient(discord.Client):
            
                 await bot_helper.user_track_item(user_discord_id, item_id, item_name, ideal_price, refinable, refine_goal)
 
-                tracking_success_response = 'Now tracking ' + '**'+ item_name + '**'+', you will be notified here when it is on sell <= ' + '**' + bot_helper.price_format(ideal_price) + '**' + " refine >= " + '**' + str(refine_goal) +'**' 
+                tracking_success_response = 'Now tracking ' + '**'+ item_name + '**'+ ', you will be notified here when it is on sell <= '  
+                tracking_success_response += '**' + bot_helper.price_format(ideal_price) + '**'
+
+                if (refinable):
+                    tracking_success_response += " refine >= " + '**' + str(refine_goal) + '**'
                 tracking_success = discord.Embed(title="Tracking Success", description=tracking_success_response, color=success_color)
                 
                 await message.author.send(embed=tracking_success)
@@ -192,9 +199,9 @@ class MyClient(discord.Client):
                 return       
 
             if (item_id == ""): # untrack input is incorrect
-                invalid_format_response = "Example Usage is \n !untrack item_id\n !track 21018"
+                invalid_format_response = "Example Usage is \n !untrack item_id\n !untrack 21018"
                 invalid_untracking_input = discord.Embed(title="Invalid Format", description=invalid_format_response, color=warning_color)
-                await message.author.send(embed=invalid_tracking_input)
+                await message.author.send(embed=invalid_untracking_input)
                 return
 
             item_name = bot_helper.get_item_name(item_id)
@@ -254,7 +261,7 @@ class MyClient(discord.Client):
         
         while not client.is_closed():
             
-            await asyncio.sleep(20) # 900s = run every 15 minutes
+            await asyncio.sleep(900) # 900s = run every 15 minutes
             print("starting cycle")
 
             try:

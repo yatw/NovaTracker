@@ -105,34 +105,34 @@ def current_market_info(item_id):
     return on_sell
 
 refinable_class = {
-    'Headgear',
-    'Armor',
-    'Shield',
-    'Shoes',
-    'Footgear',
-    'Garment',
-    'Dagger',
-    'One-Handed Sword',
-    'Two-Handed Sword',
-    'One-Handed Spear',
-    'Two-Handed Spear',
-    'One-Handed Axe',
-    'Two-Handed Axe',
-    'Mace',
-    'Staff',
-    'Bow',
-    'Knuckle',
-    'Musical Instrument',
-    'Whip',
-    'Book',
-    'Katar',
-    'Revolver',
-    'Rifle',
-    'Gatling Gun',
-    'Shotgun',
-    'Grenade Launcher',
-    'Fuuma Shuriken',
-    'Two-handed Staff'
+    'headgear',
+    'armor',
+    'shield',
+    'shoes',
+    'footgear',
+    'garment',
+    'dagger',
+    'one-handed sword',
+    'two-handed sword',
+    'one-handed spear',
+    'two-handed spear',
+    'one-handed axe',
+    'two-handed axe',
+    'mace',
+    'staff',
+    'bow',
+    'knuckle',
+    'musical instrument',
+    'whip',
+    'book',
+    'katar',
+    'revolver',
+    'rifle',
+    'gatling gun',
+    'shotgun',
+    'grenade launcher',
+    'fuuma shuriken',
+    'two-handed staff'
 }
 
 
@@ -148,10 +148,12 @@ def can_refine(item_id):
     if (class_des is None):
         return False
     
-    item_class = class_des.group(0)
+    item_class = class_des.group(0).lower()
 
-    if (item_class == "Headgear"):
-        if (re.search(r'(?<=Location: )[\w -]',item_description).group(0) == "Upper"):
+    if (item_class == "headgear"):
+
+        # only upper headgear can be refine
+        if (re.search(r'(?<=Location: )[\w -]+',item_description).group(0) == "Upper"):
             return True
         else:
             return False
