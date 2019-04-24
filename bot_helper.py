@@ -119,6 +119,8 @@ async def parse_track_command(command):
 
         if (len(tokens) > 4):
             raise Exception('Extra tokens')
+        elif (len(tokens) < 4):
+            raise Exception('Missing tokens')
 
         # CHECK if item in database, if so, get item name and refinable, else ping nova
 
@@ -256,6 +258,8 @@ async def parse_untrack_command(command):
 
         if (len(tokens) > 2):
             raise Exception('Extra tokens')
+        elif (len(tokens) < 2):
+            raise Exception('Missing tokens')
 
         item_id = tokens[1]
 

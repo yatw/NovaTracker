@@ -153,6 +153,10 @@ class MyClient(discord.Client):
                 confirm_track.add_field(name="refine >=", value='**'+str(refine_goal)+'**', inline=True)
                 
             confirm_track.add_field(name="price <=", value='**'+bot_helper.price_format(ideal_price)+'**', inline=True)
+
+            # debug purpose line
+            confirm_track.add_field(name="-----------  System think it is Refinable = " + str(refinable) + "-----------", value="For debug purpose, please dismiss and !report if you believe the system is wrong", inline=False)
+                
             await message.author.send(embed=confirm_track)
 
                 
@@ -235,6 +239,8 @@ class MyClient(discord.Client):
             return 
 
 
+        if message.content.startswith('!report'):
+            await message.author.send("Thank you for your report, this feature is not yet implemented")
             
 
         if message.content.startswith('!getname'):

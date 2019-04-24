@@ -112,21 +112,27 @@ refinable_class = {
     'footgear',
     'garment',
     'dagger',
+    'sword',
     'one-handed sword',
     'two-handed sword',
+    'spear',
     'one-handed spear',
     'two-handed spear',
+    'axe',
     'one-handed axe',
     'two-handed axe',
     'mace',
     'staff',
+    'rod',
     'bow',
     'knuckle',
+    'instrument',
     'musical instrument',
     'whip',
     'book',
     'katar',
     'revolver',
+    'pistol',
     'rifle',
     'gatling gun',
     'shotgun',
@@ -135,7 +141,7 @@ refinable_class = {
     'two-handed staff'
 }
 
-
+#check the item card "Class" field
 def can_refine(item_id):
 
     
@@ -149,7 +155,7 @@ def can_refine(item_id):
         return False
     
     item_class = class_des.group(0).lower()
-
+    #print(item_class)
     if (item_class == "headgear"):
 
         # only upper headgear can be refine
