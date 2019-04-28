@@ -7,6 +7,11 @@ from bot_config import db
 import novamarket
 
 
+# Get user_number ======================================================================================
+
+def get_user_number():
+    return db.users.count_documents({})
+
 # information Functions ================================================================================
 # both might need nova connection
 
@@ -340,6 +345,12 @@ def handle_user_trackings():
     to_notify = []
 
     for item in db.items.find():
+
+
+        # if no one is tracking this item, we can just skip pining Nova
+        if (no_one_tracking(item['REFINE'])):
+            continue
+        
                 
         on_sell = novamarket.current_market_info(item['ITEM_ID'])
 
@@ -369,3 +380,13 @@ def handle_user_trackings():
 
               
     return to_notify
+
+def no_one_tracking(refine_level_list):
+
+    for refine_level in refine_level_list:
+        if len(refine_level) > 0:
+            return False
+
+    # all refine level is empty
+    return True
+

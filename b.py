@@ -240,25 +240,39 @@ class MyClient(discord.Client):
 
 
         if message.content.startswith('!report'):
-            await message.author.send("Thank you for your report, this feature is not yet implemented")
+            await message.author.send("Thank you for your report, this feature is coming soon")
             
 
-        if message.content.startswith('!getname'):
 
-            result = re.findall(r"[A-Za-z0-9]+",message.content)
+        if message.content.startswith('!help'):
 
-            input_id = result[1]
-            item_name = bot_helper.get_item_name(input_id)
-            await message.author.send(item_name)
-
-            return 
-        
+            bot_commands = "!register\n"
+            bot_commands += "!track\n"
+            bot_commands += "!untrack\n"
+            bot_commands += "!showtrack\n"
+            bot_commands += "!report\n"
+            bot_commands += "!quote\n"
+            bot_commands += "!about\n"
+            bot_commands += "!help\n"
+            help_message = discord.Embed(title="NovaTracker Commands", description=bot_commands, color=feedback_color)                
+            await message.author.send(embed=help_message)
             
         # For fun stuff all here======================================
     
         if message.content.startswith('!about'):
 
-            await message.author.send("Made with Babyish Love")
+            user_numbers = bot_helper.get_user_number()
+
+            about_text = "Currently on beta "
+            about_text += "with " + "**"+str(user_numbers)+ "**" + " users\n"
+            about_text += "Please support this bot by telling your friends!"
+            about_message = discord.Embed(title="Made with Babyish Love", description=about_text, color=feedback_color)                
+            await message.author.send(embed=about_message)
+
+        if message.content.startswith('!quote'):
+            
+            quote = discord.Embed(title="if you experience hell first, then everything is heaven to you - by Babyish Love", color=feedback_color)                
+            await message.author.send(embed=quote)
 
     
     async def notify_user(self, user_id, notify_message):
