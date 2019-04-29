@@ -3,7 +3,7 @@ import discord
 import re
 
 from discord.ext import commands
-from bot_config import DISCORD_TOKEN
+from bot_config import DISCORD_TOKEN, MY_DISCORD_NAME
 import bot_helper
 
 error_color = 0xFF5C5C
@@ -240,7 +240,7 @@ class MyClient(discord.Client):
 
 
         if message.content.startswith('!report'):
-            await message.author.send("Thank you for your report, this feature is coming soon")
+            await message.author.send("Thank you for your report, this feature is coming soon, use !contact for now")
             
 
 
@@ -251,11 +251,25 @@ class MyClient(discord.Client):
             bot_commands += "!untrack\n"
             bot_commands += "!showtrack\n"
             bot_commands += "!report\n"
+            bot_commands += "!contact\n"
             bot_commands += "!quote\n"
+            bot_commands += "!start\n"
             bot_commands += "!about\n"
             bot_commands += "!help\n"
             help_message = discord.Embed(title="NovaTracker Commands", description=bot_commands, color=feedback_color)                
             await message.author.send(embed=help_message)
+
+
+        if message.content.startswith('!start'):
+
+            bot_description = "Nova Tracker is a discord bot to help user track items on sell in the market\n"
+            bot_description += "It personalizes your tracking preference and notifies you directly on discord\n"
+            bot_description += "This bot handles all messages directly so just pm it like a discord user\n"
+            bot_description += "Do notice that if Nova website is down this bot will also be down\n"
+            bot_description += "**Start using it by typing !help**\n"
+     
+            start_message = discord.Embed(title="Start using NovaTracker", description=bot_description, color=feedback_color)                
+            await message.channel.send(embed=start_message)
             
         # For fun stuff all here======================================
     
@@ -273,6 +287,12 @@ class MyClient(discord.Client):
             
             quote = discord.Embed(title="if you experience hell first, then everything is heaven to you - by Babyish Love", color=feedback_color)                
             await message.author.send(embed=quote)
+
+
+        if message.content.startswith('!contact'):
+            
+            contact_info = discord.Embed(title="Contact Info", description=MY_DISCORD_NAME, color=feedback_color)                
+            await message.author.send(embed=contact_info)
 
     
     async def notify_user(self, user_id, notify_message):
