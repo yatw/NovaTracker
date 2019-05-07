@@ -56,9 +56,14 @@ def to_price(price):
     return price.lower().replace("k","000").replace("m","000000").replace("b","000000000")
 
 
-def construct_notification_message(item_name, item_id, refine_level, price, location):
+def construct_notification_message(item_name, item_id, refinable, refine_level, price, location):
 
-    notification_message  = "**" + item_name + " +" + refine_level + "**" + " (" + item_id + ")" 
+    notification_message  = "**" + item_name
+
+    if (refinable):
+        notification_message += " +" + refine_level
+        
+    notification_message += "**" + " (" + item_id + ")" 
     notification_message += " is on sell " +  "**" + price_format(price) +  "**"
     notification_message += " at " +  "**" + location + "**" 
 
@@ -80,6 +85,25 @@ async def user_register(user_discord_id):
             'INTERESTED_ITEMS' : {}
         }
     )
+
+    return None
+
+# Handle Remove User ======================================================================================
+
+async def remove_user(user_discord_id):
+
+    # first find all the item this user is tracking
+    # call untrack on all of them
+    # remove this user
+
+    tracking_items = db.users.find_one({'DISCORD_ID' : user_discord_id})['INTERESTED_ITEMS']
+
+    for item_id in tracking_items:
+
+        remove_tracking_users(user_discord_id, item_id)
+    
+    db.users.delete_one({'DISCORD_ID' : user_discord_id})
+
 
     return None
 
@@ -358,6 +382,8 @@ def handle_user_trackings():
         if (on_sell is None):
             continue
 
+        refinable = item['REFINABLE']
+
         # for every refine_level
         for refine_level in item['REFINE']:
 
@@ -375,7 +401,7 @@ def handle_user_trackings():
                 ideal_price = db.users.find_one({'DISCORD_ID' : tracking_user})['INTERESTED_ITEMS'][item['ITEM_ID']]['IDEAL_PRICE']
              
                 if lowest_price <= ideal_price:
-                    message = construct_notification_message(item['ITEM_NAME'], item['ITEM_ID'], refine_level, lowest_price, location)
+                    message = construct_notification_message(item['ITEM_NAME'], item['ITEM_ID'], refinable, refine_level, lowest_price, location)
                     to_notify.append((tracking_user,message))
 
               

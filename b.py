@@ -3,7 +3,7 @@ import discord
 import re
 
 from discord.ext import commands
-from bot_config import DISCORD_TOKEN, MY_DISCORD_NAME
+from bot_config import DISCORD_TOKEN, DISCORD_TOKEN_DEV, MY_DISCORD_NAME
 import bot_helper
 
 error_color = 0xFF5C5C
@@ -29,6 +29,8 @@ class MyClient(discord.Client):
         print(client.user.id)
         print('Logged on as', self.user)
         print('------')
+        #await client.user.edit(username="NovaTracker")
+        #print("Changed new name to ", client.user.name)
 
     async def on_message(self, message):
 
@@ -246,16 +248,17 @@ class MyClient(discord.Client):
 
         if message.content.startswith('!help'):
 
-            bot_commands = "!register\n"
+            bot_commands = "!start\n"
+            bot_commands += "!about\n"
+            bot_commands += "!register\n"
             bot_commands += "!track\n"
             bot_commands += "!untrack\n"
             bot_commands += "!showtrack\n"
             bot_commands += "!report\n"
             bot_commands += "!contact\n"
             bot_commands += "!quote\n"
-            bot_commands += "!start\n"
-            bot_commands += "!about\n"
             bot_commands += "!help\n"
+            
             help_message = discord.Embed(title="NovaTracker Commands", description=bot_commands, color=feedback_color)                
             await message.author.send(embed=help_message)
 
@@ -298,6 +301,13 @@ class MyClient(discord.Client):
     async def notify_user(self, user_id, notify_message):
         user = client.get_user(user_id)
 
+        if (user is None):
+
+            # if user id is invalid
+            await bot_helper.remove_user(user_id)
+            print("Deleted invalid user :" + str(user_id))
+            return
+
         onsell_notification = discord.Embed(title="Item on sell", description=notify_message, color=notify_color)
         await user.send(embed=onsell_notification) 
 
@@ -319,6 +329,7 @@ class MyClient(discord.Client):
                 print("complete cycle")
                     
             except Exception as e:
+                print("Problem in cycle:!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 print(str(e))           
             
 

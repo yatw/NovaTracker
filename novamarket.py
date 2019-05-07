@@ -149,17 +149,22 @@ def can_refine(item_id):
 
     item_description = soup.find('div', {'class': 'item-desc'}).text
 
-    class_des = re.search(r'(?<=Class: )[\w -]+',item_description)
+    class_des = re.search(r'(?<=Class) *:[\w -]+',item_description)
 
     if (class_des is None):
         return False
     
-    item_class = class_des.group(0).lower()
-    #print(item_class)
+    item_class = class_des.group(0).split(":")[1].strip().lower()
+
+
     if (item_class == "headgear"):
 
         # only upper headgear can be refine
-        if (re.search(r'(?<=Location: )[\w -]+',item_description).group(0) == "Upper"):
+        location = re.search(r'(?<=Location) *:[\w -]+',item_description)
+        if (location is None):
+            return False
+
+        if location.group(0).split(":")[1].strip() == "Upper":
             return True
         else:
             return False
