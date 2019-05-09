@@ -17,3 +17,5 @@ for it to keep running
 screen
 leave screen (Ctrl A+D)
 go back to screen (screen -r number)
+
+on ubuntu run python3 b.py!!!!

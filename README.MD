@@ -32,7 +32,7 @@ When user requested to track Crimson Bow [2] refine >= 15 at price <= 800,000,00
 ## Bot commands
 
 * `!register`
-	*Initialize user in the database, this registration is bond to the user's discord id"
+	*Initialize user in the database, this registration is bond to the user's discord id*
 
 * `!track item_id refine ideal_price`
 	*Example: User want to track Lindy Hop [2] (21018) at refine >= 8, at price <= 200,000,000z*
@@ -51,7 +51,7 @@ When user requested to track Crimson Bow [2] refine >= 15 at price <= 800,000,00
 	*Allow user to report bug*
 
 * `!quote`
-	*Show my favourite quote of the moment*
+	*Show my favourite quote at the moment*
 	
 * `!start`
 	*Give a brief description of this bot for first time user*

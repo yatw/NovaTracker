@@ -31,7 +31,7 @@ def get_nova_page(item_id):
 # For this given item, check nova market
 # return a dict { refine: [lowest price on market, location]}
 def current_market_info(item_id):
-
+    
     
     soup = get_nova_page(item_id)
 

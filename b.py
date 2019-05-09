@@ -1,6 +1,8 @@
 import asyncio
 import discord
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 from discord.ext import commands
 from bot_config import DISCORD_TOKEN, DISCORD_TOKEN_DEV, MY_DISCORD_NAME
@@ -20,7 +22,6 @@ class MyClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.bg_task = self.loop.create_task(self.track_nova_market())
-        
 
     
     async def on_ready(self):
@@ -29,7 +30,7 @@ class MyClient(discord.Client):
         print(client.user.id)
         print('Logged on as', self.user)
         print('------')
-        #await client.user.edit(username="NovaTracker")
+        #await client.user.edit(username="NovaTrackerBeta")
         #print("Changed new name to ", client.user.name)
 
     async def on_message(self, message):
@@ -321,8 +322,10 @@ class MyClient(discord.Client):
             await asyncio.sleep(900) # 900s = run every 15 minutes
             print("starting cycle")
 
+            
             try:
-                to_notify = bot_helper.handle_user_trackings()
+                loop = asyncio.get_event_loop()
+                to_notify = await loop.run_in_executor(ThreadPoolExecutor(), bot_helper.handle_user_trackings)
             
                 for user_id, message in to_notify:
                     await self.notify_user(user_id,message)
@@ -330,7 +333,10 @@ class MyClient(discord.Client):
                     
             except Exception as e:
                 print("Problem in cycle:!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print(str(e))           
+                print(str(e))
+            
+
+        return
             
 
 client = MyClient()
