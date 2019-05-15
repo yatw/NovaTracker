@@ -21,7 +21,7 @@ def can_refine(item_id):
     result = db.items.find_one({'ITEM_ID' : item_id})
 
 
-    # if database has this item, just return the stored name
+    # if database has this item, just return the stored variable
     if (result is not None):
         return result['REFINABLE']
 
@@ -342,6 +342,7 @@ def remove_tracking_users(user_discord_id, item_id):
 
 
         REFINE_DICT = db.items.find_one({'ITEM_ID' : item_id})['REFINE']
+
         REFINE_DICT[str(refine_level)].remove(user_discord_id)
 
         db.items.update(
@@ -353,6 +354,7 @@ def remove_tracking_users(user_discord_id, item_id):
             }
             
         )
+
     return None
 
 

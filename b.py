@@ -1,11 +1,13 @@
 import asyncio
+import datetime
 import discord
 import re
 import time
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 
 from discord.ext import commands
-from bot_config import DISCORD_TOKEN, DISCORD_TOKEN_DEV, MY_DISCORD_NAME
+from bot_config import DISCORD_TOKEN, DISCORD_TOKEN_DEV, MY_DISCORD_NAME, MY_DISCORD_ID
 import bot_helper
 
 error_color = 0xFF5C5C
@@ -13,6 +15,7 @@ success_color = 0x00BF00
 warning_color = 0xF4F442
 feedback_color = 0x6FA8DC
 notify_color = 0xFF9900
+crash_title = "Oops it crashes! I am so sorry~~, will fix it ASAP"
 
 
 
@@ -52,10 +55,17 @@ class MyClient(discord.Client):
                 registration_fail = discord.Embed(title="Registration Fail", description="You have already registered", color=error_color) 
                 await message.author.send(embed=registration_fail)
                 return
-            
-            await bot_helper.user_register(user_discord_id)
-            registration_success = discord.Embed(title="Registration Success", description="you can start tracking items with !track command", color=success_color)
-            await message.author.send(embed=registration_success)
+
+            try:
+                await bot_helper.user_register(user_discord_id)
+                registration_success = discord.Embed(title="Registration Success", description="you can start tracking items with !track command", color=success_color)
+                await message.author.send(embed=registration_success)
+                
+            except Exception as e:
+                crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
+                await message.author.send(embed=crash)
+                await client.get_user(MY_DISCORD_ID).send(embed=crash)
+                
             return
 
         if message.content.startswith("!showtrack"):
@@ -68,8 +78,13 @@ class MyClient(discord.Client):
                 return
                 
 
-            
-            tracking_message = await bot_helper.show_tracking_items(user_discord_id)
+            try:
+                tracking_message = await bot_helper.show_tracking_items(user_discord_id)
+            except Exception as e:
+                crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
+                await message.author.send(embed=crash)
+                await client.get_user(MY_DISCORD_ID).send(embed=crash)
+                return
 
             if (tracking_message == ""):
                 nothing_on_track = discord.Embed(title="No items tracking", description="You are currently not tracking any item", color=feedback_color) 
@@ -85,7 +100,7 @@ class MyClient(discord.Client):
             # Check if the user is registered
             # Check if the user input is correct
             # Check if the item is alredy tracking
-            # TODO Check the user tracking item limit
+            # Check the user tracking item limit
             # Ask user for confirmation
         
             
@@ -167,17 +182,27 @@ class MyClient(discord.Client):
             #print("User confirm text: " + user_confirm_text.content)
         
             if (user_confirm_text.content == "CONFIRM"):
-           
-                await bot_helper.user_track_item(user_discord_id, item_id, item_name, ideal_price, refinable, refine_goal)
 
-                tracking_success_response = 'Now tracking ' + '**'+ item_name + '**'+ ', you will be notified here when it is on sell <= '  
-                tracking_success_response += '**' + bot_helper.price_format(ideal_price) + '**'
 
-                if (refinable):
-                    tracking_success_response += " refine >= " + '**' + str(refine_goal) + '**'
-                tracking_success = discord.Embed(title="Tracking Success", description=tracking_success_response, color=success_color)
-                
-                await message.author.send(embed=tracking_success)
+                try:
+               
+                    await bot_helper.user_track_item(user_discord_id, item_id, item_name, ideal_price, refinable, refine_goal)
+
+                    tracking_success_response = 'Now tracking ' + '**'+ item_name + '**'+ ', you will be notified here when it is on sell <= '  
+                    tracking_success_response += '**' + bot_helper.price_format(ideal_price) + '**'
+
+                    if (refinable):
+                        tracking_success_response += " refine >= " + '**' + str(refine_goal) + '**'
+                    tracking_success = discord.Embed(title="Tracking Success", description=tracking_success_response, color=success_color)
+                    
+                    await message.author.send(embed=tracking_success)
+
+                    
+                except Exception as e:
+                    crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
+                    await message.author.send(embed=crash)
+                    await client.get_user(MY_DISCORD_ID).send(embed=crash)
+                    
                 return
             else:
 
@@ -191,7 +216,7 @@ class MyClient(discord.Client):
         if message.content.startswith('!untrack'):
             # Check if the user is registered
             # Check if the user input is correct
-            # TODO Check if the item is alredy tracking
+            # Check if the item is alredy tracking
             # Check the user tracking item limit
             # Ask user for confirmation
 
@@ -232,13 +257,19 @@ class MyClient(discord.Client):
                 not_tracking = discord.Embed(title="Untrack Fail", description=not_tracking_response, color=warning_color)                
                 await message.author.send(embed=not_tracking)
                 return
-        
-            await bot_helper.user_untrack_item(user_discord_id, item_id)
 
-            untrack_success_response = "You are no longer tracking " + "**" + item_name + "**"
-            untrack_success = discord.Embed(title="Untrack Success", description=untrack_success_response, color=success_color)                
-            await message.author.send(embed=untrack_success)
-            
+            try:
+                await bot_helper.user_untrack_item(user_discord_id, item_id)
+
+                untrack_success_response = "You are no longer tracking " + "**" + item_name + "**"
+                untrack_success = discord.Embed(title="Untrack Success", description=untrack_success_response, color=success_color)                
+                await message.author.send(embed=untrack_success)
+                
+            except Exception as e:
+                crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
+                await message.author.send(embed=crash)
+                await client.get_user(MY_DISCORD_ID).send(embed=crash)
+
             return 
 
 
@@ -304,9 +335,11 @@ class MyClient(discord.Client):
 
         if (user is None):
 
-            # if user id is invalid
+            # if user id is invalid, may be due to delete discord account
             await bot_helper.remove_user(user_id)
             print("Deleted invalid user :" + str(user_id))
+            delete_user_report = discord.Embed(title="Delete Invalid User", description="Deleted invalid user :" + str(user_id), color=feedback_color) 
+            await client.get_user(MY_DISCORD_ID).send(embed=delete_user_report)
             return
 
         onsell_notification = discord.Embed(title="Item on sell", description=notify_message, color=notify_color)
@@ -320,20 +353,25 @@ class MyClient(discord.Client):
         while not client.is_closed():
             
             await asyncio.sleep(900) # 900s = run every 15 minutes
-            print("starting cycle")
+            now = datetime.datetime.now()
+            print("Starting cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
 
             
             try:
+                
                 loop = asyncio.get_event_loop()
                 to_notify = await loop.run_in_executor(ThreadPoolExecutor(), bot_helper.handle_user_trackings)
             
                 for user_id, message in to_notify:
                     await self.notify_user(user_id,message)
-                print("complete cycle")
-                    
+                
+                print("Complete cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
+                                
             except Exception as e:
-                print("Problem in cycle:!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print(str(e))
+                print("Problem in cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
+                crash_title_for_me = "Problem in cycle at " + now.strftime("%Y-%m-%d %H:%M %p")
+                crash = discord.Embed(title=crash_title_for_me, description=traceback.format_exc(), color=error_color) 
+                await client.get_user(MY_DISCORD_ID).send(embed=crash)
             
 
         return
@@ -341,3 +379,7 @@ class MyClient(discord.Client):
 
 client = MyClient()
 client.run(DISCORD_TOKEN)
+
+#DISCORD_TOKEN_DEV, DISCORD_TOKEN
+
+
