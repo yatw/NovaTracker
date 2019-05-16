@@ -1,7 +1,7 @@
 
 # NovaTracker
 
-A discord bot to help user track items on sell in the market, no more physicallly logging in and manually check it yourself!
+A discord bot to help user track items on sell in the market, no more physically logging in and manually check it yourself!
 
 
 ## Personalize tracking preference

@@ -1,11 +1,13 @@
 import asyncio
-import datetime
 import discord
 import re
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor
+import pytz
 
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from pytz import timezone
 from discord.ext import commands
 from bot_config import DISCORD_TOKEN, DISCORD_TOKEN_DEV, MY_DISCORD_NAME, MY_DISCORD_ID
 import bot_helper
@@ -353,18 +355,21 @@ class MyClient(discord.Client):
         while not client.is_closed():
             
             await asyncio.sleep(900) # 900s = run every 15 minutes
-            now = datetime.datetime.now()
+            
+            now = datetime.now(tz=pytz.utc)
+            now = now.astimezone(timezone('US/Pacific'))
+            
             print("Starting cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
 
             
             try:
-                
+                '''
                 loop = asyncio.get_event_loop()
                 to_notify = await loop.run_in_executor(ThreadPoolExecutor(), bot_helper.handle_user_trackings)
             
                 for user_id, message in to_notify:
                     await self.notify_user(user_id,message)
-                
+                '''
                 print("Complete cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
                                 
             except Exception as e:
@@ -372,13 +377,12 @@ class MyClient(discord.Client):
                 crash_title_for_me = "Problem in cycle at " + now.strftime("%Y-%m-%d %H:%M %p")
                 crash = discord.Embed(title=crash_title_for_me, description=traceback.format_exc(), color=error_color) 
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)
-            
 
         return
-            
+
 
 client = MyClient()
-client.run(DISCORD_TOKEN)
+client.run(DISCORD_TOKEN_DEV)
 
 #DISCORD_TOKEN_DEV, DISCORD_TOKEN
 

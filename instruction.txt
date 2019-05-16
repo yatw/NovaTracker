@@ -1,4 +1,5 @@
 python -m pip install --user -U https://github.com/Rapptz/discord.py/archive/rewrite.zip
+pip install pytz
 pip install pymongo
 pip install dnspython
 pip install BeautifulSoup4
@@ -8,6 +9,7 @@ on ubuntu
 sudo apt install python3
 sudo snap install discord
 python3 -m pip install --user -U https://github.com/Rapptz/discord.py/archive/rewrite.zip
+python3 -m pip install pytz
 python3 -m pip install pymongo
 python3 -m pip install dnspython
 python3 -m pip install BeautifulSoup4
