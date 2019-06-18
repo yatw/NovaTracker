@@ -112,6 +112,47 @@ async def remove_user(user_discord_id):
 
     return None
 
+# lowest function =========================================================================================
+
+
+'''
+Return a list of items on sell, regardless if the price is below user's price range
+'''
+async def get_lowest(user_discord_id):
+
+
+    lowest_report = []
+
+    
+    tracking_items = db.users.find_one({'DISCORD_ID' : user_discord_id})['INTERESTED_ITEMS']
+
+    for item_id in tracking_items:
+
+        item = db.items.find_one({'ITEM_ID':item_id})
+
+        on_sell = novamarket.current_market_info(item_id)
+
+        # No item on sell at all (mvp card)
+        if (on_sell is None):
+            lowest_report.append("**" + item['ITEM_NAME'] + "**" + " (" + item_id + ") "+" is currently not on sell")
+            continue
+
+        # for every refine_level >= user refine goal, get the lowest item
+        for refine_level in item['REFINE']:
+
+            
+            if (int(refine_level) >= tracking_items[item_id]['REFINE_GOAL']):
+
+                if (on_sell[refine_level]['price'] == -1): #refine of this level not on sell
+                    continue
+
+                lowest_price = on_sell[refine_level]['price']
+                location = on_sell[refine_level]['location']
+                
+                message = construct_notification_message(item['ITEM_NAME'], item_id, item['REFINABLE'], refine_level, lowest_price, location)
+                lowest_report.append(message)
+
+    return lowest_report
 
 # Show track function =====================================================================================
 
@@ -125,11 +166,14 @@ async def show_tracking_items(user_discord_id):
     for item_id in tracking_items:
         count += 1
         tracking_message += str(count) + ": " + "**"+ get_item_name(item_id) +"**"+ " " + "(" + item_id + ")" + "\t"
-        tracking_message += "refine >= " + "**"+str(tracking_items[item_id]['REFINE_GOAL'])+"**"
-        tracking_message += " ,sell price <= " + "**"+price_format(tracking_items[item_id]['IDEAL_PRICE'])+ "**" + "\n"
+        tracking_message += ",sell price <= " + "**"+ price_format(tracking_items[item_id]['IDEAL_PRICE'])+ "**" + "\t"
+
+        if can_refine(item_id):
+            tracking_message += " ,refine >= " + "**"+str(tracking_items[item_id]['REFINE_GOAL'])+"**"
+
+        tracking_message += "\n"
 
     return tracking_message
-
 
 # Handle Track functions ===================================================================================
 
@@ -141,7 +185,7 @@ async def count_tracking_item(user_discord_id):
 
     return len(db.users.find_one({'DISCORD_ID': user_discord_id})['INTERESTED_ITEMS'])
 
-'''This can be use for both track and untrack command'''
+'''This can be use for both track and untrack command, return the user search query (id or name)'''
 async def parse_track_command(command):
     # correct usage:  !track item_id/item_name
     # example         !track ed magic
@@ -153,20 +197,12 @@ async def parse_track_command(command):
         if (len(tokens) < 2):
             raise Exception('Missing tokens')
 
-        search_term = tokens[1]
-
-        # user type in item_id
-        if search_term.isdigit():
-            return 1, search_term
-            
-        # user type in search string
-        return 2, search_term
-
+        return tokens[1]
         
     except Exception as e:
-        return 0, str(e)
+        return None
         
-    return 0, None
+    return None
 
 
 async def user_track_item(user_discord_id, item_id, item_name, ideal_price, refinable, refine_goal):

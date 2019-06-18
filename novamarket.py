@@ -29,8 +29,11 @@ def get_nova_page(url):
 # return a dict { refine: [lowest price on market, location]}
 def current_market_info(item_id):
     
+    global NOVA_MARKET_URL
     
-    soup = get_nova_page(item_id)
+    nova_url = NOVA_MARKET_URL + item_id
+    
+    soup = get_nova_page(nova_url)
 
     table = soup.find('table', {'id': 'itemtable'})
 

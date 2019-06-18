@@ -121,18 +121,18 @@ class MyClient(discord.Client):
                 return
 
             
-            # correct usage:  !track item_id or name
+            # correct usage:  !track item_id/name
             # example         !track 21018
 
         
-            # parse the user input and search the item_id
+            # parse the user input
 
-            input_type, search_term = await bot_helper.parse_track_command(message.content)
+            search_term = await bot_helper.parse_track_command(message.content)
 
             #input_type 1 is item_id
             #input_type 2 is search string
 
-            if (input_type == 0):
+            if (search_term is None):
          
                 invalid_format_response = "Example Usage is: \n"
                 invalid_format_response += "!track item_id/item name \n"
@@ -145,8 +145,8 @@ class MyClient(discord.Client):
             item_id = None
             item_name = None
 
-
-            if input_type == 1:
+            # user type in item_id
+            if search_term.isdigit():
 
                 item_id = search_term
                 item_name = bot_helper.get_item_name(item_id)
@@ -156,9 +156,8 @@ class MyClient(discord.Client):
                     await message.author.send(embed=no_result_respond)
                     return
 
-            elif input_type == 2:
-
-                # if it is a name, search nova website
+            # user type in item name
+            else:
 
                 try:
                     search_matches = bot_helper.search_item(search_term)
@@ -341,9 +340,9 @@ class MyClient(discord.Client):
             # example         !untrack 21018
 
 
-            input_type, search_term = await bot_helper.parse_track_command(message.content)
+            search_term = await bot_helper.parse_track_command(message.content)
 
-            if (input_type == 0):
+            if (search_term is None):
          
                 invalid_format_response = "Example Usage is: \n !untrack item_id\n !untrack 21018"
                 invalid_tracking_input = discord.Embed(title=search_term, description=invalid_format_response, color=warning_color)
@@ -356,7 +355,8 @@ class MyClient(discord.Client):
             item_name = None
 
 
-            if input_type == 1:
+            # user type in item_id
+            if search_term.isdigit():
 
                 item_id = search_term
                 item_name = bot_helper.get_item_name(item_id)
@@ -366,9 +366,8 @@ class MyClient(discord.Client):
                     await message.author.send(embed=no_result_respond)
                     return
 
-            elif input_type == 2:
-
-                # if it is a name, search nova website
+            # user type in item_name
+            else:
 
                 try:
                     search_matches = bot_helper.search_item(search_term)
@@ -441,6 +440,39 @@ class MyClient(discord.Client):
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)
 
             return 
+
+
+
+        if message.content.startswith('!lowest'):
+
+            user_discord_id = message.author.id
+
+            if not(await bot_helper.already_registrated(user_discord_id)):
+                need_registration = discord.Embed(title="Need Registration", description="Please register with !register command", color=error_color) 
+                await message.author.send(embed=need_registration)
+                return
+                
+
+            try:
+                lowest_report = await bot_helper.get_lowest(user_discord_id)
+            except Exception as e:
+                crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
+                await message.author.send(embed=crash)
+                await client.get_user(MY_DISCORD_ID).send(embed=crash)
+                return
+
+            if (lowest_report == []):
+                nothing_on_track = discord.Embed(title="No items tracking", description="You are currently not tracking any item", color=feedback_color) 
+                await message.author.send(embed=nothing_on_track)
+                return
+
+            for result in lowest_report:
+                await self.notify_user(user_discord_id,result)
+
+            return
+
+
+
 
 
         if message.content.startswith('!report'):
