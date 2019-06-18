@@ -1,4 +1,5 @@
 
+
 # NovaTracker
 
 A discord bot to help user track items on sell in the market, no more physically logging in and manually check it yourself!
@@ -72,3 +73,44 @@ When user requested to track Crimson Bow [2] refine >= 15 at price <= 800,000,00
 
 ## Example
 ![alt text](https://github.com/yatw/NovaTracker/blob/master/example.png)
+
+
+## Hosting Instructions
+
+
+### Dependencies
+
+**Note that the following was done in Window OS**
+```
+python -m pip install --user -U https://github.com/Rapptz/discord.py/archive/rewrite.zip
+pip install pytz
+pip install pymongo
+pip install dnspython
+pip install BeautifulSoup4
+```
+
+### On Ubuntu
+```
+sudo apt install python3
+sudo snap install discord
+python3 -m pip install --user -U https://github.com/Rapptz/discord.py/archive/rewrite.zip
+python3 -m pip install pytz
+python3 -m pip install pymongo
+python3 -m pip install dnspython
+python3 -m pip install BeautifulSoup4
+```
+
+**For it to keep running, inside Ubuntu instance**
+```
+screen
+leave screen (Ctrl A+D)
+go back to screen(screen -r number)
+```
+delete a screen 
+```
+screen -X -S [session # you want to kill] quit
+```
+**To start the bot on Ubuntu**
+```
+python3 NovaTracker.py
+```

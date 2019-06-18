@@ -20,4 +20,7 @@ screen
 leave screen (Ctrl A+D)
 go back to screen (screen -r number)
 
-on ubuntu run python3 b.py!!!!
+delete a screen 
+screen -X -S [session # you want to kill] quit
+
+on ubuntu run python3 NovaTracker.py!!!!

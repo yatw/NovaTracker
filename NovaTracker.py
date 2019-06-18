@@ -35,7 +35,7 @@ class MyClient(discord.Client):
         print(client.user.id)
         print('Logged on as', self.user)
         print('------')
-        #await client.user.edit(username="NovaTrackerBeta")
+        #await client.user.edit(username="NovaTracker")
         #print("Changed new name to ", client.user.name)
 
     async def on_message(self, message):
@@ -556,13 +556,13 @@ class MyClient(discord.Client):
 
             
             try:
-                '''
+                
                 loop = asyncio.get_event_loop()
                 to_notify = await loop.run_in_executor(ThreadPoolExecutor(), bot_helper.handle_user_trackings)
             
                 for user_id, message in to_notify:
                     await self.notify_user(user_id,message)
-                '''
+                
                 print("Complete cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
                                 
             except Exception as e:
@@ -575,7 +575,7 @@ class MyClient(discord.Client):
 
 
 client = MyClient()
-client.run(DISCORD_TOKEN_DEV)
+client.run(DISCORD_TOKEN)
 
 #DISCORD_TOKEN_DEV, DISCORD_TOKEN
 
