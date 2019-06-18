@@ -10,7 +10,7 @@ A discord bot to help user track items on sell in the market, no more physically
 
 * Tracker will only track that item with refine >= refine requirement is on sell <= ideal price
 
-* Each user is allow to track up to five items
+* Each user is allow to track up to ten items
 
 * Tracker will check the market every 15 minutes
 
@@ -34,18 +34,21 @@ When user requested to track Crimson Bow [2] refine >= 15 at price <= 800,000,00
 * `!register`
 	*Initialize user in the database, this registration is bond to the user's discord id*
 
-* `!track item_id refine ideal_price`
-	*Example: User want to track Lindy Hop [2] (21018) at refine >= 8, at price <= 200,000,000z*
+* `!track item_id/item_name`
+	*Example: User want to track Lindy Hop [2] (21018)*
 	
-	`!track 21018 8 200m`
+	`!track 21018`
 	
 	*ideal_price token accept k = 000, m = 000,000, and b = 000,000,000*
 
-* `!untrack item_id`
+* `!untrack item_id/item_name`
 	*Stop tracking the item*
 	
 * `!showtrack`
 	*List all the item user is currently tracking*
+
+* `!lowest`
+	*Display the lowest price of the tracking items currently on market*
 	
 * `!report`
 	*Allow user to report bug*
@@ -58,7 +61,6 @@ When user requested to track Crimson Bow [2] refine >= 15 at price <= 800,000,00
 	
 * `!about`
 	*Display user number and bot status*
-
 
 * `!help`
 	*List all the commands for this bot*

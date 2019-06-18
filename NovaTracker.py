@@ -19,7 +19,7 @@ feedback_color = 0x6FA8DC # blue
 notify_color = 0xFF9900   # orange
 crash_title = "Oops it crashes! I am so sorry~~, will fix it ASAP"
 
-tracking_limit = 5
+tracking_limit = 10
 
 #https://github.com/Rapptz/discord.py
 class MyClient(discord.Client):
@@ -188,8 +188,6 @@ class MyClient(discord.Client):
                     for match in search_matches:
                         count += 1
                         select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
-
-                    select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
                         
                     await message.author.send(embed=select_item)
                     user_input_index = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
@@ -349,11 +347,8 @@ class MyClient(discord.Client):
                 await message.author.send(embed=invalid_tracking_input)
                 return
 
-
-
             item_id = None
             item_name = None
-
 
             # user type in item_id
             if search_term.isdigit():
@@ -398,8 +393,6 @@ class MyClient(discord.Client):
                     for match in search_matches:
                         count += 1
                         select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
-
-                    select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
                         
                     await message.author.send(embed=select_item)
                     user_input_index = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
@@ -452,7 +445,6 @@ class MyClient(discord.Client):
                 await message.author.send(embed=need_registration)
                 return
                 
-
             try:
                 lowest_report = await bot_helper.get_lowest(user_discord_id)
             except Exception as e:
@@ -482,19 +474,20 @@ class MyClient(discord.Client):
 
         if message.content.startswith('!help'):
 
-            bot_commands = "!start\n"
-            bot_commands += "!about\n"
-            bot_commands += "!register\n"
-            bot_commands += "!track\n"
-            bot_commands += "!untrack\n"
-            bot_commands += "!showtrack\n"
-            bot_commands += "!report\n"
-            bot_commands += "!contact\n"
-            bot_commands += "!quote\n"
-            bot_commands += "!help\n"
+            embed=discord.Embed(title="NovaTracker Commands", description="Please support this bot by telling your friends!", color=feedback_color)
+            embed.add_field(name="!start", value="Give a brief description of this bot for first time user", inline=False)
+            embed.add_field(name="!about", value="Display user number and bot status", inline=False)
+            embed.add_field(name="!register", value="Initialize user in the database, this registration is bond to the user's discord id", inline=False)
+            embed.add_field(name="!track", value="**Where the fun begin!**", inline=False)
+            embed.add_field(name="!untrack", value="Stop tracking the item", inline=False)
+            embed.add_field(name="!showtrack", value="List all the items user is currently tracking", inline=False)
+            embed.add_field(name="!lowest", value="Display the lowest price of the tracking items currently on market", inline=False)
+            embed.add_field(name="!report", value="Allow user to report bug", inline=False)
+            embed.add_field(name="!contact", value="Show my discord name for contact", inline=False)
+            embed.add_field(name="!quote", value="Show my favourite quote at the moment", inline=False)
+            embed.add_field(name="!help", value="List all the commands for this bot", inline=False)
             
-            help_message = discord.Embed(title="NovaTracker Commands", description=bot_commands, color=feedback_color)                
-            await message.author.send(embed=help_message)
+            await message.author.send(embed=embed)
 
 
         if message.content.startswith('!start'):
@@ -514,7 +507,7 @@ class MyClient(discord.Client):
 
             user_numbers = bot_helper.get_user_number()
 
-            about_text = "Currently on beta "
+            about_text = "Currently on Version 1.0 "
             about_text += "with " + "**"+str(user_numbers)+ "**" + " users\n"
             about_text += "Please support this bot by telling your friends!"
             about_message = discord.Embed(title="Made with Babyish Love", description=about_text, color=feedback_color)                
