@@ -15,11 +15,11 @@ import bot_helper
 error_color = 0xFF5C5C
 success_color = 0x00BF00
 warning_color = 0xF4F442
-feedback_color = 0x6FA8DC
-notify_color = 0xFF9900
+feedback_color = 0x6FA8DC # blue
+notify_color = 0xFF9900   # orange
 crash_title = "Oops it crashes! I am so sorry~~, will fix it ASAP"
 
-
+tracking_limit = 5
 
 #https://github.com/Rapptz/discord.py
 class MyClient(discord.Client):
@@ -47,6 +47,7 @@ class MyClient(discord.Client):
         # don't react to other bots
         if message.author.bot:
             return
+
 
         if message.content.startswith("!register"):
 
@@ -104,62 +105,170 @@ class MyClient(discord.Client):
             # Check if the item is alredy tracking
             # Check the user tracking item limit
             # Ask user for confirmation
+
         
-            
+            # Check if the user is registered
             user_discord_id = message.author.id
             if not(await bot_helper.already_registrated(user_discord_id)):
                 need_registration = discord.Embed(title="Need Registration", description="Please register with !register command", color=error_color) 
                 await message.author.send(embed=need_registration)
                 return
-                
-            if (await bot_helper.count_tracking_item(user_discord_id) >= 5):
-                max_tracking = discord.Embed(title="Maximum tracking limit", description="You are at your maximum tracking limit (5), try to untrack some items.", color=warning_color)
+
+            # Check the user tracking item limit
+            if (await bot_helper.count_tracking_item(user_discord_id) >= tracking_limit) and user_discord_id != MY_DISCORD_ID:
+                max_tracking = discord.Embed(title="Maximum tracking limit", description="You are at your maximum tracking limit ("+tracking_limit+"), try to untrack some items.", color=warning_color)
                 await message.author.send(embed=max_tracking)
                 return
 
             
-            # correct usage:  !track item_id refine_goal ideal_price(k,m,b all work)
-            # example         !track 21018 8 200m
+            # correct usage:  !track item_id or name
+            # example         !track 21018
 
         
-            # parse the user input into tokens and return as a dictionary
+            # parse the user input and search the item_id
 
-            result = await bot_helper.parse_track_command(message.content)
-       
+            input_type, search_term = await bot_helper.parse_track_command(message.content)
 
-            if (result["invalid"]): # user input is invalid
+            #input_type 1 is item_id
+            #input_type 2 is search string
 
-                problem_detail = result["problem"]
+            if (input_type == 0):
          
-                if ( problem_detail == "Nova Down"):
+                invalid_format_response = "Example Usage is: \n"
+                invalid_format_response += "!track item_id/item name \n"
+                invalid_format_response += "!track ed magic"
+                invalid_tracking_input = discord.Embed(title=search_term, description=invalid_format_response, color=warning_color)
+                await message.author.send(embed=invalid_tracking_input)
+                return
+
+
+            item_id = None
+            item_name = None
+
+
+            if input_type == 1:
+
+                item_id = search_term
+                item_name = bot_helper.get_item_name(item_id)
+
+                if (item_name == "Unknown"):
+                    no_result_respond = discord.Embed(title="No item found", description="There is no item with id " + search_term, color=warning_color)
+                    await message.author.send(embed=no_result_respond)
+                    return
+
+            elif input_type == 2:
+
+                # if it is a name, search nova website
+
+                try:
+                    search_matches = bot_helper.search_item(search_term)
+                    
+                except Exception as e:
+                    
                     nova_down_respond = discord.Embed(title="Cannot Connect to Nova at the Moment", description="Please try again some other time", color=error_color)
                     await message.author.send(embed=nova_down_respond)
                     return
 
+                                
+                if search_matches is None:
+                    no_result_respond = discord.Embed(title="No item found", description="There is no search result for " + search_term + ", try using item id", color=warning_color)
+                    await message.author.send(embed=no_result_respond)
+                    return
 
+
+                ### PROMPT for selection/ item_id /item_name
+
+                index = 0
                 
-                invalid_format_response = "Example Usage is: \n"
-                invalid_format_response += "!track item_id refine_goal ideal_price(K,M,B all work)\n!"
-                invalid_format_response += "track 21018 8 200m (put 0 if refine not appliable)"
-                invalid_tracking_input = discord.Embed(title=problem_detail, description=invalid_format_response, color=warning_color)
-                await message.author.send(embed=invalid_tracking_input)
-                return
-            
-            #print(result)
-            item_id     = result["item_id"]
-            item_name   = result["item_name"]
-            refinable   = result["refinable"]
-            refine_goal = result["refine_goal"]
-            ideal_price = result["ideal_price"]
-            
-            
+                if len(search_matches) > 1:
+
+
+                    select_item = discord.Embed(title="Please __**Enter the index**__ to select the item, type anything else to dismiss", description=str(len(search_matches)) + " results", color=feedback_color)
+
+                    count = 0
+                    for match in search_matches:
+                        count += 1
+                        select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
+
+                    select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
+                        
+                    await message.author.send(embed=select_item)
+                    user_input_index = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
+
+                    try:
+                        user_input_index = int(user_input_index.content)
+                        if (user_input_index < 1 or user_input_index > count):
+                            raise Exception("Invalid Index")
+                        index = user_input_index -1
+                        
+                        
+                    except Exception as e:
+                        dismiss_select = discord.Embed(title="Dismiss", description=str(e), color=warning_color)
+                        await message.author.send(embed=dismiss_select)
+                        return
+                    
+                item_id = search_matches[index][1]
+                item_name = search_matches[index][0]       
 
                     
-            # item not already tracking
+            # item already tracking
             if (await bot_helper.already_tracking(user_discord_id, item_id)):
                     dobule_tracking_response = 'You are already tracking ' + '**' + item_name + '**' + "(" + item_id + ")"
                     double_tracking = discord.Embed(title="Tracking Fail", description=dobule_tracking_response, color=warning_color)
                     await message.author.send(embed=double_tracking)
+                    return
+
+            try:
+                refinable = bot_helper.can_refine(item_id) # can_refine can fail if Nova is down
+                
+            except Exception as e:
+                nova_down_respond = discord.Embed(title="Cannot Connect to Nova at the Moment", description="Please try again some other time", color=error_color)
+                await message.author.send(embed=nova_down_respond)
+                return
+                
+            refine_goal = 0
+            ideal_price = 0    
+
+            ### PROMPT for ideal_price
+
+            
+            enter_ideal_price = discord.Embed(title="You selected " + "**"+item_name+"**" + " (" + item_id + ")", description="Enter your ideal price (K,M,B all work)", color=feedback_color)
+            await message.author.send(embed=enter_ideal_price)
+            
+            user_input_ideal_price = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
+
+            try:
+                user_input_ideal_price = int(bot_helper.to_price(user_input_ideal_price.content))
+
+                if (user_input_ideal_price < 1 or user_input_ideal_price > 1000000000):
+                    raise Exception('Valid price range is 1 to 1,000,000,000')
+                
+                ideal_price = user_input_ideal_price
+
+            except Exception as e:
+                dismiss_select = discord.Embed(title="Dismiss", description=str(e), color=warning_color)
+                await message.author.send(embed=dismiss_select)
+                return
+                        
+
+            ### PROMPT for refine_goal
+            if (refinable):
+
+                
+                enter_refine_level = discord.Embed(title="Enter a refine goal", description="0-20, type anything else to dismiss", color=feedback_color)
+                await message.author.send(embed=enter_refine_level)
+                
+                user_input_refine_goal = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
+
+                try:
+                    user_input_refine_goal = int(user_input_refine_goal.content)
+                    if (user_input_refine_goal < 0 or user_input_refine_goal > 20):
+                        raise Exception('Valid refine is 0 to 20')
+                    refine_goal = user_input_refine_goal
+
+                except Exception as e:
+                    dismiss_select = discord.Embed(title="Dismiss", description=str(e), color=warning_color)
+                    await message.author.send(embed=dismiss_select)
                     return
     
                 
@@ -190,7 +299,7 @@ class MyClient(discord.Client):
                
                     await bot_helper.user_track_item(user_discord_id, item_id, item_name, ideal_price, refinable, refine_goal)
 
-                    tracking_success_response = 'Now tracking ' + '**'+ item_name + '**'+ ', you will be notified here when it is on sell <= '  
+                    tracking_success_response = 'Now tracking ' + '**'+ item_name + '**'+ " ("+ item_id + ")"+ ', you will be notified here when it is on sell <= '  
                     tracking_success_response += '**' + bot_helper.price_format(ideal_price) + '**'
 
                     if (refinable):
@@ -219,8 +328,7 @@ class MyClient(discord.Client):
             # Check if the user is registered
             # Check if the user input is correct
             # Check if the item is alredy tracking
-            # Check the user tracking item limit
-            # Ask user for confirmation
+
 
             user_discord_id = message.author.id
             if not(await bot_helper.already_registrated(user_discord_id)):
@@ -229,33 +337,93 @@ class MyClient(discord.Client):
                 return
                 
             
-            # correct usage:  !untrack item_id
+            # correct usage:  !untrack item_id/item_name
             # example         !untrack 21018
 
 
-            result = await bot_helper.parse_untrack_command(message.content)
+            input_type, search_term = await bot_helper.parse_track_command(message.content)
 
-            if (result["invalid"]): # untrack input is incorrect
-
-                problem_detail = result["problem"]
+            if (input_type == 0):
          
-                if ( problem_detail == "Nova Down"):
+                invalid_format_response = "Example Usage is: \n !untrack item_id\n !untrack 21018"
+                invalid_tracking_input = discord.Embed(title=search_term, description=invalid_format_response, color=warning_color)
+                await message.author.send(embed=invalid_tracking_input)
+                return
+
+
+
+            item_id = None
+            item_name = None
+
+
+            if input_type == 1:
+
+                item_id = search_term
+                item_name = bot_helper.get_item_name(item_id)
+
+                if (item_name == "Unknown"):
+                    no_result_respond = discord.Embed(title="No item found", description="There is no search result for " + search_term, color=warning_color)
+                    await message.author.send(embed=no_result_respond)
+                    return
+
+            elif input_type == 2:
+
+                # if it is a name, search nova website
+
+                try:
+                    search_matches = bot_helper.search_item(search_term)
+                    
+                except Exception as e:
+                    
                     nova_down_respond = discord.Embed(title="Cannot Connect to Nova at the Moment", description="Please try again some other time", color=error_color)
                     await message.author.send(embed=nova_down_respond)
                     return
 
-                
-                invalid_format_response = "Example Usage is: \n !untrack item_id\n !untrack 21018"
-                invalid_untracking_input = discord.Embed(title=problem_detail, description=invalid_format_response, color=warning_color)
-                await message.author.send(embed=invalid_untracking_input)
-                return
+                                
+                if search_matches is None:
+                    no_result_respond = discord.Embed(title="No item found", description="There is no search result for " + search_term + ", try using item id", color=warning_color)
+                    await message.author.send(embed=no_result_respond)
+                    return
 
-            item_id = result["item_id"]
-            item_name = result["item_name"]
+
+                ### PROMPT for selection/ item_id /item_name
+
+                index = 0
+                
+                if len(search_matches) > 1:
+
+
+                    select_item = discord.Embed(title="Please __**Enter the index**__ to select the item, type anything else to dismiss", description=str(len(search_matches)) + " results", color=feedback_color)
+
+                    count = 0
+                    for match in search_matches:
+                        count += 1
+                        select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
+
+                    select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
+                        
+                    await message.author.send(embed=select_item)
+                    user_input_index = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
+
+                    try:
+                        user_input_index = int(user_input_index.content)
+                        if (user_input_index < 1 or user_input_index > count):
+                            raise Exception("Invalid Index")
+                        index = user_input_index -1
+                        
+                        
+                    except Exception as e:
+                        dismiss_select = discord.Embed(title="Dismiss", description=str(e), color=warning_color)
+                        await message.author.send(embed=dismiss_select)
+                        return
+                    
+                item_id = search_matches[index][1]
+                item_name = search_matches[index][0]
+
 
             if not (await bot_helper.already_tracking(user_discord_id, item_id)):
 
-                not_tracking_response = "You have not been tracking " + "**" +item_name + "**"
+                not_tracking_response = "You have not been tracking " + "**" +item_name + "**" + " (" + item_id + ")"
                 not_tracking = discord.Embed(title="Untrack Fail", description=not_tracking_response, color=warning_color)                
                 await message.author.send(embed=not_tracking)
                 return
@@ -263,7 +431,7 @@ class MyClient(discord.Client):
             try:
                 await bot_helper.user_untrack_item(user_discord_id, item_id)
 
-                untrack_success_response = "You are no longer tracking " + "**" + item_name + "**"
+                untrack_success_response = "You are no longer tracking " + "**" + item_name + "**" + " (" + item_id + ")"
                 untrack_success = discord.Embed(title="Untrack Success", description=untrack_success_response, color=success_color)                
                 await message.author.send(embed=untrack_success)
                 

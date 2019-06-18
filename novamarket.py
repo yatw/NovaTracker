@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import re
 
 NOVA_MARKET_URL = 'https://www.novaragnarok.com/?module=vending&action=item&id=' 
+NOVA_SEARCH_URL = 'https://www.novaragnarok.com/?module=item&action=index&type=&name='
 
 #
 #https://medium.freecodecamp.org/how-to-scrape-websites-with-python-and-beautifulsoup-5946935d93fe
@@ -12,14 +13,10 @@ NOVA_MARKET_URL = 'https://www.novaragnarok.com/?module=vending&action=item&id='
 
 
         
-def get_nova_page(item_id):
-
-    global NOVA_MARKET_URL
-    
-    nova_url = NOVA_MARKET_URL + item_id
+def get_nova_page(url):
 
     try:
-        req = Request(nova_url, headers={'User-Agent': 'Mozilla/5.0'})
+        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         page = urlopen(req).read()
         soup = BeautifulSoup(page, 'html.parser')
     except:
@@ -144,8 +141,11 @@ refinable_class = {
 #check the item card "Class" field
 def can_refine(item_id):
 
+    global NOVA_MARKET_URL
     
-    soup = get_nova_page(item_id)
+    nova_url = NOVA_MARKET_URL + item_id
+    
+    soup = get_nova_page(nova_url)
 
     item_description = soup.find('div', {'class': 'item-desc'}).text
 
@@ -173,10 +173,51 @@ def can_refine(item_id):
     return item_class in refinable_class
 
 def search_item_name(item_id):
-    ''' If item exist return item name, not return Unknown'''
+    '''
+        Use this function when id is known
+        If item exist return item name, not return Unknown
+    '''
 
-    soup = get_nova_page(item_id)
+    global NOVA_MARKET_URL
+    
+    nova_url = NOVA_MARKET_URL + item_id
+
+    soup = get_nova_page(nova_url)
 
     item_name = soup.find('div', {'class': 'item-name'}).text
 
     return item_name
+
+def search_item(encoded_name):
+    ''' If item exist return item name, not return Unknown'''
+
+    global NOVA_SEARCH_URL
+    
+    nova_url = NOVA_SEARCH_URL + encoded_name
+    
+    soup = get_nova_page(nova_url)
+
+    table = soup.find('table', {'id': 'itemtable'})
+    
+    if table is None:
+        return None
+
+    # arrray of name, id
+    match = []
+
+
+    item_match = table.find_all('tr')
+    
+    for item in item_match:
+
+        item_info = item.find_all('td')         
+
+        item_id = item_info[0].text.strip()
+        item_name = item_info[2].text.strip()
+
+        match.append([item_name, item_id])
+        
+    return match
+
+
+    

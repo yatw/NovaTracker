@@ -1,6 +1,7 @@
 import asyncio
 import discord
 import re
+import urllib.parse #url encode
 
 from discord.ext import commands
 from bot_config import db
@@ -28,6 +29,7 @@ def can_refine(item_id):
     # if database don't have, check nova website
     return novamarket.can_refine(item_id)
 
+
 def get_item_name(item_id):
     '''First look through database, if not found, check nova website'''
 
@@ -42,6 +44,10 @@ def get_item_name(item_id):
     # if database don't have, check nova website
     return novamarket.search_item_name(item_id)
 
+def search_item(search_term):
+
+    encoded_name = urllib.parse.quote_plus(search_term)
+    return novamarket.search_item(encoded_name)
 
 
 # Text formatting functions all here =======================================================================
@@ -49,7 +55,6 @@ def price_format(price):
     # 3500000 to 3,500,000z
 
     return str('{:,}'.format(price)) + 'z'
-
 
 def to_price(price):
 
@@ -136,57 +141,32 @@ async def count_tracking_item(user_discord_id):
 
     return len(db.users.find_one({'DISCORD_ID': user_discord_id})['INTERESTED_ITEMS'])
 
-
+'''This can be use for both track and untrack command'''
 async def parse_track_command(command):
-    # correct usage:  !track item_id refine_goal ideal_price(K,M,B all work)
-    # example         !track 21018 8 200m
+    # correct usage:  !track item_id/item_name
+    # example         !track ed magic
 
-
-    result = {}
     try:
-        tokens = re.findall(r"[A-Za-z0-9]+",command)
+        
+        tokens = command.split(' ', 1)
 
-        if (len(tokens) > 4):
-            raise Exception('Extra tokens')
-        elif (len(tokens) < 4):
+        if (len(tokens) < 2):
             raise Exception('Missing tokens')
 
-        # CHECK if item in database, if so, get item name and refinable, else ping nova
+        search_term = tokens[1]
 
-        item_id = tokens[1]
+        # user type in item_id
+        if search_term.isdigit():
+            return 1, search_term
+            
+        # user type in search string
+        return 2, search_term
 
-        item_name = get_item_name(item_id) # get_item_name can fail if Nova is down
-        if (item_name == "Unknown"):
-            raise Exception('Invalid Item ID')
-
-
-        # if refine able check if refine is valid 
-        refine_goal = int(tokens[2])
-        if (refine_goal < 0 or refine_goal > 20):
-            raise Exception('Valid refine is 0 to 20')
-        result["refine_goal"] = refine_goal
-       
-        refinable = can_refine(item_id) # can_refine can fail if Nova is down
-        if not (refinable):
-            result["refine_goal"] = 0
-        result["refinable"] = refinable
-
-
-        ideal_price = int(to_price(tokens[3]))
-        if (ideal_price < 1 or ideal_price > 1000000000):
-            raise Exception('Valid price range is 1 to 1,000,000,000')
-        result["ideal_price"] = ideal_price            
-
-        result["item_id"] = item_id
-        result["item_name"] = item_name
         
-        result["invalid"] = False
     except Exception as e:
-        result["invalid"] = True
-        result["problem"] = str(e)
+        return 0, str(e)
         
-
-    return result
+    return 0, None
 
 
 async def user_track_item(user_discord_id, item_id, item_name, ideal_price, refinable, refine_goal):
@@ -275,39 +255,6 @@ def insert_tracking_users(user_discord_id, item_id, refinable, refine_goal):
 
 
 # Handle Untrack commands functions===============================================================================
-
-async def parse_untrack_command(command):
-    # all you have to do is vertify the item_id is valid, but doesn't check if it exist
-    # correct usage:  !untrack item_id
-    # example         !untrack 21018
-
-    result = {}
-    try:
-        tokens = re.findall(r"[A-Za-z0-9]+",command)
-
-        if (len(tokens) > 2):
-            raise Exception('Extra tokens')
-        elif (len(tokens) < 2):
-            raise Exception('Missing tokens')
-
-        item_id = tokens[1]
-
-        item_name = get_item_name(item_id)
-        if item_name == "Unknown":
-            raise Exception('Item Not Found')
-    
-        result["item_id"] = item_id
-        result["item_name"] = item_name
-        result["invalid"] = False
-        return result
-
-    except Exception as e:
-        result["invalid"] = True
-        result["problem"] = str(e)
-        return result
-
-
-    return result
 
 
 async def user_untrack_item(user_discord_id, item_id):
@@ -399,7 +346,8 @@ def handle_user_trackings():
             for tracking_user in item['REFINE'][refine_level]:
 
                 # check user onsell price <= ideal price
-                
+
+                # BUGGY LINE
                 ideal_price = db.users.find_one({'DISCORD_ID' : tracking_user})['INTERESTED_ITEMS'][item['ITEM_ID']]['IDEAL_PRICE']
              
                 if lowest_price <= ideal_price:
