@@ -116,7 +116,7 @@ class MyClient(discord.Client):
 
             # Check the user tracking item limit
             if (await bot_helper.count_tracking_item(user_discord_id) >= tracking_limit) and user_discord_id != MY_DISCORD_ID:
-                max_tracking = discord.Embed(title="Maximum tracking limit", description="You are at your maximum tracking limit ("+tracking_limit+"), try to untrack some items.", color=warning_color)
+                max_tracking = discord.Embed(title="Maximum tracking limit", description="You are at your maximum tracking limit ("+ str(tracking_limit)+ "), try to untrack some items.", color=warning_color)
                 await message.author.send(embed=max_tracking)
                 return
 
