@@ -152,7 +152,7 @@ class MyClient(discord.Client):
                 item_name = bot_helper.get_item_name(item_id)
 
                 if (item_name == "Unknown"):
-                    no_result_respond = discord.Embed(title="No item found", description="There is no item with id " + search_term, color=warning_color)
+                    no_result_respond = discord.Embed(title="No item found", description="There is no item with ID " + search_term, color=warning_color)
                     await message.author.send(embed=no_result_respond)
                     return
 
@@ -190,9 +190,19 @@ class MyClient(discord.Client):
                         select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
                         
                     await message.author.send(embed=select_item)
-                    user_input_index = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
 
+                    # Get user input
                     try:
+                        user_input_index = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
+
+                    except asyncio.TimeoutError:
+                        dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
+                        await message.author.send(embed=dismiss_select)
+                        return
+
+                    
+                    try:
+
                         user_input_index = int(user_input_index.content)
                         if (user_input_index < 1 or user_input_index > count):
                             raise Exception("Invalid Index")
@@ -231,10 +241,19 @@ class MyClient(discord.Client):
             
             enter_ideal_price = discord.Embed(title="You selected " + "**"+item_name+"**" + " (" + item_id + ")", description="Enter your ideal price (K,M,B all work)", color=feedback_color)
             await message.author.send(embed=enter_ideal_price)
-            
-            user_input_ideal_price = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
 
+            # Get user input
             try:
+                user_input_ideal_price = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
+
+            except asyncio.TimeoutError:
+                dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
+                await message.author.send(embed=dismiss_select)
+                return
+
+            
+            try:
+
                 user_input_ideal_price = int(bot_helper.to_price(user_input_ideal_price.content))
 
                 if (user_input_ideal_price < 1 or user_input_ideal_price > 1000000000):
@@ -254,10 +273,18 @@ class MyClient(discord.Client):
                 
                 enter_refine_level = discord.Embed(title="Enter a refine goal", description="0-20, type anything else to dismiss", color=feedback_color)
                 await message.author.send(embed=enter_refine_level)
-                
-                user_input_refine_goal = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
 
+                # Get user input
                 try:
+                    user_input_refine_goal = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
+
+                except asyncio.TimeoutError:
+                    dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
+                    await message.author.send(embed=dismiss_select)
+                    return
+                    
+                try:
+
                     user_input_refine_goal = int(user_input_refine_goal.content)
                     if (user_input_refine_goal < 0 or user_input_refine_goal > 20):
                         raise Exception('Valid refine is 0 to 20')
@@ -285,10 +312,16 @@ class MyClient(discord.Client):
                 
             await message.author.send(embed=confirm_track)
 
+            # Get user input
+            try:
+                user_confirm_text = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
+                #print("User confirm text: " + user_confirm_text.content)
                 
-            user_confirm_text = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
-            #print("User confirm text: " + user_confirm_text.content)
-        
+            except asyncio.TimeoutError:
+                dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
+                await message.author.send(embed=dismiss_select)
+                return
+            
             if (user_confirm_text.content == "CONFIRM"):
 
 
@@ -357,7 +390,7 @@ class MyClient(discord.Client):
                 item_name = bot_helper.get_item_name(item_id)
 
                 if (item_name == "Unknown"):
-                    no_result_respond = discord.Embed(title="No item found", description="There is no search result for " + search_term, color=warning_color)
+                    no_result_respond = discord.Embed(title="No item found", description="There is no item with ID " + search_term, color=warning_color)
                     await message.author.send(embed=no_result_respond)
                     return
 
@@ -395,9 +428,17 @@ class MyClient(discord.Client):
                         select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
                         
                     await message.author.send(embed=select_item)
-                    user_input_index = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot)
 
+                    # Get user input
                     try:
+                        user_input_index = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
+                    except asyncio.TimeoutError:
+                        dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
+                        await message.author.send(embed=dismiss_select)
+                        return
+                    
+                    try:
+
                         user_input_index = int(user_input_index.content)
                         if (user_input_index < 1 or user_input_index > count):
                             raise Exception("Invalid Index")
@@ -575,7 +616,7 @@ class MyClient(discord.Client):
 
 
 client = MyClient()
-client.run(DISCORD_TOKEN)
+client.run(DISCORD_TOKEN_DEV)
 
 #DISCORD_TOKEN_DEV, DISCORD_TOKEN
 

@@ -2,7 +2,7 @@
 
 # NovaTracker
 
-A discord bot to help user track items on sell in the market, no more physically logging in and manually check it yourself!
+A discord bot to help user track items on sell in the market, no more physically logging in and manually checking it yourself!
 
 
 ## Personalize tracking preference
@@ -11,9 +11,9 @@ A discord bot to help user track items on sell in the market, no more physically
 
 * Tracker will only track that item with refine >= refine requirement is on sell <= ideal price
 
-* Each user is allow to track up to ten items
+* Each user is allow to track up to **10** items
 
-* Tracker will check the market every 15 minutes
+* Tracker will check the market every **15** minutes
 
 * If any item match user's preference, NovaTracker will discord message the user
 
@@ -46,7 +46,7 @@ When user requested to track Crimson Bow [2] refine >= 15 at price <= 800,000,00
 	*Stop tracking the item*
 	
 * `!showtrack`
-	*List all the item user is currently tracking*
+	*List all the items user is currently tracking*
 
 * `!lowest`
 	*Display the lowest price of the tracking items currently on market*
@@ -110,7 +110,7 @@ delete a screen
 ```
 screen -X -S [session # you want to kill] quit
 ```
-**To start the bot on Ubuntu**
+**To start running the bot on Ubuntu**
 ```
 python3 NovaTracker.py
 ```
