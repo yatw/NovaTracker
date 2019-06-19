@@ -45,6 +45,9 @@ When user requested to track Crimson Bow [2] refine >= 15 at price <= 800,000,00
 * `!untrack item_id/item_name`
 	*Stop tracking the item*
 	
+* `!clear`
+	*Untrack all items at once*
+	
 * `!showtrack`
 	*List all the items user is currently tracking*
 
@@ -106,7 +109,7 @@ screen
 leave screen (Ctrl A+D)
 go back to screen(screen -r number)
 ```
-delete a screen 
+**To delete a screen**
 ```
 screen -X -S [session # you want to kill] quit
 ```

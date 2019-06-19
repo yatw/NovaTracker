@@ -69,7 +69,7 @@ class MyClient(discord.Client):
                 await message.author.send(embed=crash)
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)
                 
-            return
+            return None
 
         if message.content.startswith("!showtrack"):
 
@@ -96,7 +96,8 @@ class MyClient(discord.Client):
 
             tracking_result = discord.Embed(title="You are currently tracking:", description=tracking_message, color=feedback_color)
             await message.author.send(embed=tracking_result)
-            return
+            
+            return None
 
 
         if message.content.startswith("!track"):
@@ -239,7 +240,7 @@ class MyClient(discord.Client):
             ### PROMPT for ideal_price
 
             
-            enter_ideal_price = discord.Embed(title="You selected " + "**"+item_name+"**" + " (" + item_id + ")", description="Enter your ideal price (K,M,B all work)", color=feedback_color)
+            enter_ideal_price = discord.Embed(title="You selected " + "**"+item_name+"**" + " (" + item_id + ")", description="Enter your ideal price (accept k = 000, m = 000,000, and b = 000,000,000), etc 50m", color=feedback_color)
             await message.author.send(embed=enter_ideal_price)
 
             # Get user input
@@ -473,10 +474,43 @@ class MyClient(discord.Client):
                 await message.author.send(embed=crash)
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)
 
-            return 
+            return None
 
 
+        if message.content.startswith('!clear'):
 
+            user_discord_id = message.author.id
+
+            if not(await bot_helper.already_registrated(user_discord_id)):
+                need_registration = discord.Embed(title="Need Registration", description="Please register with !register command", color=error_color) 
+                await message.author.send(embed=need_registration)
+                return
+
+
+            try:
+                tracking_items = await bot_helper.untrack_all(user_discord_id)
+
+            except Exception as e:
+                crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
+                await message.author.send(embed=crash)
+                await client.get_user(MY_DISCORD_ID).send(embed=crash)
+
+
+            if (tracking_items == []):
+                nothing_on_track = discord.Embed(title="No items tracking", description="You are currently not tracking any item", color=feedback_color) 
+                await message.author.send(embed=nothing_on_track)
+                return
+
+
+            for item_id, item_name in tracking_items:
+
+                untrack_success_response = "You are no longer tracking " + "**" + item_name + "**" + " (" + item_id + ")"
+                untrack_success = discord.Embed(title="Untrack Success", description=untrack_success_response, color=success_color)                
+                await message.author.send(embed=untrack_success)
+                
+                
+            return None
+    
         if message.content.startswith('!lowest'):
 
             user_discord_id = message.author.id
@@ -502,9 +536,7 @@ class MyClient(discord.Client):
             for result in lowest_report:
                 await self.notify_user(user_discord_id,result)
 
-            return
-
-
+            return None
 
 
 
@@ -521,6 +553,7 @@ class MyClient(discord.Client):
             embed.add_field(name="!register", value="Initialize user in the database, this registration is bond to the user's discord id", inline=False)
             embed.add_field(name="!track", value="**Where the fun begin!**", inline=False)
             embed.add_field(name="!untrack", value="Stop tracking the item", inline=False)
+            embed.add_field(name="!clear", value="Untrack all items at once", inline=False)
             embed.add_field(name="!showtrack", value="List all the items user is currently tracking", inline=False)
             embed.add_field(name="!lowest", value="Display the lowest price of the tracking items currently on market", inline=False)
             embed.add_field(name="!report", value="Allow user to report bug", inline=False)

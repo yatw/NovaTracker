@@ -293,6 +293,19 @@ def insert_tracking_users(user_discord_id, item_id, refinable, refine_goal):
 # Handle Untrack commands functions===============================================================================
 
 
+async def untrack_all(user_discord_id):
+
+    untracked_items = []
+
+    items = db.users.find_one({'DISCORD_ID' : user_discord_id})['INTERESTED_ITEMS']
+
+    for item_id in items:
+
+        await user_untrack_item(user_discord_id, item_id)
+        untracked_items.append([item_id, get_item_name(item_id)])
+    
+    return untracked_items
+
 async def user_untrack_item(user_discord_id, item_id):
 
     # remove the user from the item's notify list, every level
