@@ -40,10 +40,9 @@ class MyClient(discord.Client):
 
         for count, user in enumerate(db.users.find()):
 
-            if count > 3:
-                user_id = user["DISCORD_ID"]
-                print(count, user_id)
-                await self.notify_user(user_id)
+            user_id = user["DISCORD_ID"]
+            print(count, user_id)
+            await self.notify_user(user_id)
         print("DONE")
         
 

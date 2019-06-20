@@ -611,8 +611,15 @@ class MyClient(discord.Client):
             await client.get_user(MY_DISCORD_ID).send(embed=delete_user_report)
             return
 
-        onsell_notification = discord.Embed(title="Item on sell", description=notify_message, color=notify_color)
-        await user.send(embed=onsell_notification) 
+        try:
+            onsell_notification = discord.Embed(title="Item on sell", description=notify_message, color=notify_color)
+            await user.send(embed=onsell_notification)
+            
+        except discord.errors.Forbidden:
+            print("Cannot dm to user " + user_id)
+            delete_user_report = discord.Embed(title="Cannot message user", description= str(user_id), color=feedback_color) 
+            await client.get_user(MY_DISCORD_ID).send(embed=delete_user_report)
+            return
 
 
     async def track_nova_market(self):
@@ -628,23 +635,23 @@ class MyClient(discord.Client):
             
             print("Starting cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
 
-            
-            try:
-                
+            # get the market data
+            try: 
                 loop = asyncio.get_event_loop()
                 to_notify = await loop.run_in_executor(ThreadPoolExecutor(), bot_helper.handle_user_trackings)
-            
-                for user_id, message in to_notify:
-                    await self.notify_user(user_id,message)
-                
-                print("Complete cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
-                                
+
             except Exception as e:
                 print("Problem in cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
                 crash_title_for_me = "Problem in cycle at " + now.strftime("%Y-%m-%d %H:%M %p")
                 crash = discord.Embed(title=crash_title_for_me, description=traceback.format_exc(), color=error_color) 
-                await client.get_user(MY_DISCORD_ID).send(embed=crash)
+                await client.get_user(MY_DISCORD_ID).send(embed=crash)            
 
+            # notify users
+            for user_id, message in to_notify:
+                await self.notify_user(user_id,message)
+            
+            print("Complete cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
+                                
         return
 
 
