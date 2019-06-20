@@ -225,6 +225,10 @@ class MyClient(discord.Client):
                     double_tracking = discord.Embed(title="Tracking Fail", description=dobule_tracking_response, color=warning_color)
                     await message.author.send(embed=double_tracking)
                     return
+            else:
+                item_selected = discord.Embed(title="You selected " + "**"+item_name+"**" + " (" + item_id + ")", description=" ", color=feedback_color)
+                await message.author.send(embed=item_selected)
+
 
             try:
                 refinable = bot_helper.can_refine(item_id) # can_refine can fail if Nova is down
@@ -235,12 +239,40 @@ class MyClient(discord.Client):
                 return
                 
             refine_goal = 0
-            ideal_price = 0    
+            ideal_price = 0
+
+
+
+            ### PROMPT for refine_goal
+            if (refinable):
+                
+                enter_refine_level = discord.Embed(title="Enter a refine goal, get notify when the refine is at least >= ?", description="0-20, type anything else to dismiss", color=feedback_color)
+                await message.author.send(embed=enter_refine_level)
+
+                # Get user input
+                try:
+                    user_input_refine_goal = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
+
+                except asyncio.TimeoutError:
+                    dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
+                    await message.author.send(embed=dismiss_select)
+                    return
+                    
+                try:
+
+                    user_input_refine_goal = int(user_input_refine_goal.content)
+                    if (user_input_refine_goal < 0 or user_input_refine_goal > 20):
+                        raise Exception('Valid refine is 0 to 20')
+                    refine_goal = user_input_refine_goal
+
+                except Exception as e:
+                    dismiss_select = discord.Embed(title="Dismiss", description=str(e), color=warning_color)
+                    await message.author.send(embed=dismiss_select)
+                    return
 
             ### PROMPT for ideal_price
-
             
-            enter_ideal_price = discord.Embed(title="You selected " + "**"+item_name+"**" + " (" + item_id + ")", description="Enter your ideal price (accept k = 000, m = 000,000, and b = 000,000,000), etc 50m", color=feedback_color)
+            enter_ideal_price = discord.Embed(title="Enter your ideal price, get notify when the price is <= ?", description="(accept k = 000, m = 000,000, and b = 000,000,000), etc 50m", color=feedback_color)
             await message.author.send(embed=enter_ideal_price)
 
             # Get user input
@@ -266,42 +298,13 @@ class MyClient(discord.Client):
                 dismiss_select = discord.Embed(title="Dismiss", description=str(e), color=warning_color)
                 await message.author.send(embed=dismiss_select)
                 return
-                        
-
-            ### PROMPT for refine_goal
-            if (refinable):
-
-                
-                enter_refine_level = discord.Embed(title="Enter a refine goal", description="0-20, type anything else to dismiss", color=feedback_color)
-                await message.author.send(embed=enter_refine_level)
-
-                # Get user input
-                try:
-                    user_input_refine_goal = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
-
-                except asyncio.TimeoutError:
-                    dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
-                    await message.author.send(embed=dismiss_select)
-                    return
-                    
-                try:
-
-                    user_input_refine_goal = int(user_input_refine_goal.content)
-                    if (user_input_refine_goal < 0 or user_input_refine_goal > 20):
-                        raise Exception('Valid refine is 0 to 20')
-                    refine_goal = user_input_refine_goal
-
-                except Exception as e:
-                    dismiss_select = discord.Embed(title="Dismiss", description=str(e), color=warning_color)
-                    await message.author.send(embed=dismiss_select)
-                    return
     
                 
     
             # DO A CONFIRMATION
             confirm_text = "Please type __**CONFIRM**__ to track:"
             confirm_track = discord.Embed(title=confirm_text, color=feedback_color)
-            confirm_track.add_field(name="Item", value='**'+item_name+'**', inline=True)
+            confirm_track.add_field(name="Item", value='**'+item_name+ " (" + item_id + ")" + '**' , inline=True)
 
             if (refinable):
                 confirm_track.add_field(name="refine >=", value='**'+str(refine_goal)+'**', inline=True)
@@ -647,8 +650,8 @@ class MyClient(discord.Client):
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)            
 
             # notify users
-            for user_id, message in to_notify:
-                await self.notify_user(user_id,message)
+            #for user_id, message in to_notify:
+                #await self.notify_user(user_id,message)
             
             print("Complete cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
                                 
