@@ -620,8 +620,8 @@ class MyClient(discord.Client):
             
         except discord.errors.Forbidden:
             print("Cannot dm to user " + user_id)
-            delete_user_report = discord.Embed(title="Cannot message user", description= str(user_id), color=feedback_color) 
-            await client.get_user(MY_DISCORD_ID).send(embed=delete_user_report)
+            cannot_notify_report = discord.Embed(title="Cannot message user", description= str(user_id), color=feedback_color) 
+            await client.get_user(MY_DISCORD_ID).send(embed=cannot_notify_report)
             return
 
 
@@ -650,8 +650,8 @@ class MyClient(discord.Client):
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)            
 
             # notify users
-            #for user_id, message in to_notify:
-                #await self.notify_user(user_id,message)
+            for user_id, message in to_notify:
+                await self.notify_user(user_id,message)
             
             print("Complete cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
                                 
@@ -659,7 +659,7 @@ class MyClient(discord.Client):
 
 
 client = MyClient()
-client.run(DISCORD_TOKEN_DEV)
+client.run(DISCORD_TOKEN)
 
 #DISCORD_TOKEN_DEV, DISCORD_TOKEN
 

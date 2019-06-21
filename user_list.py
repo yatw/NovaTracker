@@ -1,6 +1,7 @@
 import asyncio
 import discord
 import pytz
+import sys
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -20,7 +21,7 @@ warning_color = 0xF4F442
 feedback_color = 0x6FA8DC # blue
 notify_color = 0xFF9900 # orange
 
-
+non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 
 #https://github.com/Rapptz/discord.py
 class MyClient(discord.Client):
@@ -37,6 +38,7 @@ class MyClient(discord.Client):
         print('------')
         #await client.user.edit(username="NovaTracker")
         #print("Changed new name to ", client.user.name)
+
 
         for count, user_profile in enumerate(db.users.find()):
 
@@ -71,14 +73,16 @@ class MyClient(discord.Client):
             delete_user_report = discord.Embed(title="Delete Invalid User", description="Deleted invalid user :" + str(user_id), color=feedback_color) 
             await client.get_user(MY_DISCORD_ID).send(embed=delete_user_report)
             return
+
+        print(" " + str(user_id) + " " + user.name.translate(non_bmp_map))
+        
                     
         for item_id in user_profile["INTERESTED_ITEMS"]:
 
             refine_goal = (user_profile["INTERESTED_ITEMS"][item_id]["REFINE_GOAL"])
 
 
-            message = ""
-            message += str(user_id) + " is tracking " + bot_helper.get_item_name(item_id) + " (" + item_id + ") "
+            message = "is tracking " + bot_helper.get_item_name(item_id) + " (" + item_id + ") "
 
             if (bot_helper.can_refine(item_id)):
                 message += " at +" + str(refine_goal)
@@ -101,6 +105,8 @@ class MyClient(discord.Client):
 
 client = MyClient()
 client.run(DISCORD_TOKEN)
+
+
 
 #DISCORD_TOKEN_DEV, DISCORD_TOKEN
 

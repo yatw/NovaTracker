@@ -1,13 +1,16 @@
 
 
+
 # NovaTracker
 
 A discord bot to help user track items on sell in the market, no more physically logging in and manually checking it yourself!
 
+### [To add this bot on your server](https://discordapp.com/api/oauth2/authorize?client_id=571526126602813441&permissions=2048&scope=bot)
+
 
 ## Personalize tracking preference
 
-* User can set refine requirement and ideal price for each item he want to track.
+* User can set refine requirement and ideal price for each item he wants to track.
 
 * Tracker will only track that item with refine >= refine requirement is on sell <= ideal price
 
