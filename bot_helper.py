@@ -122,7 +122,6 @@ async def get_lowest(user_discord_id):
 
 
     lowest_report = []
-
     
     tracking_items = db.users.find_one({'DISCORD_ID' : user_discord_id})['INTERESTED_ITEMS']
 
@@ -137,6 +136,8 @@ async def get_lowest(user_discord_id):
             lowest_report.append("**" + item['ITEM_NAME'] + "**" + " (" + item_id + ") "+" is currently not on sell")
             continue
 
+        has_match = False
+
         # for every refine_level >= user refine goal, get the lowest item
         for refine_level in item['REFINE']:
 
@@ -146,11 +147,16 @@ async def get_lowest(user_discord_id):
                 if (on_sell[refine_level]['price'] == -1): #refine of this level not on sell
                     continue
 
+                has_match = True
                 lowest_price = on_sell[refine_level]['price']
                 location = on_sell[refine_level]['location']
                 
                 message = construct_notification_message(item['ITEM_NAME'], item_id, item['REFINABLE'], refine_level, lowest_price, location)
                 lowest_report.append(message)
+
+        if (not has_match):
+            lowest_report.append("**" + "+" + str(tracking_items[item_id]['REFINE_GOAL']) + " or up " + item['ITEM_NAME'] + "**" + " (" + item_id + ") "+" is currently not on sell")
+
 
     return lowest_report
 

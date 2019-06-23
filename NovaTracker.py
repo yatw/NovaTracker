@@ -554,8 +554,8 @@ class MyClient(discord.Client):
             embed.add_field(name="!start", value="Give a brief description of this bot for first time user", inline=False)
             embed.add_field(name="!about", value="Display user number and bot status", inline=False)
             embed.add_field(name="!register", value="Initialize user in the database, this registration is bond to the user's discord id", inline=False)
-            embed.add_field(name="!track", value="**Where the fun begin!**", inline=False)
-            embed.add_field(name="!untrack", value="Stop tracking the item", inline=False)
+            embed.add_field(name="!track [name/id]", value="**Where the fun begin!**", inline=False)
+            embed.add_field(name="!untrack [name/id]", value="Stop tracking the item", inline=False)
             embed.add_field(name="!clear", value="Untrack all items at once", inline=False)
             embed.add_field(name="!showtrack", value="List all the items user is currently tracking", inline=False)
             embed.add_field(name="!lowest", value="Display the lowest price of the tracking items currently on market", inline=False)
@@ -662,5 +662,5 @@ client = MyClient()
 client.run(DISCORD_TOKEN)
 
 #DISCORD_TOKEN_DEV, DISCORD_TOKEN
-
+# make sure to disable notification when using DISCORD_TOKEN_DEV
 
