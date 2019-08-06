@@ -9,8 +9,9 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pytz import timezone
 from discord.ext import commands
-from bot_config import DISCORD_TOKEN, DISCORD_TOKEN_DEV, MY_DISCORD_NAME, MY_DISCORD_ID
+from bot_config import DOC_LINK,DISCORD_TOKEN, DISCORD_TOKEN_DEV, MY_DISCORD_NAME, MY_DISCORD_ID
 import bot_helper
+import bot_quotes
 
 error_color = 0xFF5C5C
 success_color = 0x00BF00
@@ -27,6 +28,7 @@ class MyClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.bg_task = self.loop.create_task(self.track_nova_market())
+        self.q = bot_quotes.Quotes()
 
     
     async def on_ready(self):
@@ -37,6 +39,8 @@ class MyClient(discord.Client):
         print('------')
         #await client.user.edit(username="NovaTracker")
         #print("Changed new name to ", client.user.name)
+
+        
 
     async def on_message(self, message):
 
@@ -61,8 +65,16 @@ class MyClient(discord.Client):
 
             try:
                 await bot_helper.user_register(user_discord_id)
-                registration_success = discord.Embed(title="Registration Success", description="you can start tracking items with !track command", color=success_color)
+                registration_success = discord.Embed(title="Registration Success", description="you can start tracking items with !track [name/id] command", color=success_color)
                 await message.author.send(embed=registration_success)
+
+                thankyou_note = discord.Embed(title="Thank You", description="If you can give it that much of a chance, I can already thank you", color=success_color)
+                await message.author.send(embed=thankyou_note)
+
+                user_numbers = bot_helper.get_user_number()
+                increase_user_report = discord.Embed(title="New User Register", description= str(user_discord_id) + " just registered, total user number is: " +  "**"+str(user_numbers)+ "**", color=feedback_color) 
+                await client.get_user(MY_DISCORD_ID).send(embed=increase_user_report)
+                     
                 
             except Exception as e:
                 crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
@@ -137,7 +149,7 @@ class MyClient(discord.Client):
          
                 invalid_format_response = "Example Usage is: \n"
                 invalid_format_response += "!track item_id/item name \n"
-                invalid_format_response += "!track ed magic"
+                invalid_format_response += "!track !track 21018 or !track lindy hop"
                 invalid_tracking_input = discord.Embed(title=search_term, description=invalid_format_response, color=warning_color)
                 await message.author.send(embed=invalid_tracking_input)
                 return
@@ -351,7 +363,7 @@ class MyClient(discord.Client):
                 return
             else:
 
-                dismiss_tracking = discord.Embed(title="Dismiss", description='Dismiss Tracking request for ' + item_name, color=warning_color)
+                dismiss_tracking = discord.Embed(title='Dismiss tracking request for ' + item_name, description="Make sure you use uppercase __**CONFIRM**__", color=warning_color)
                 await message.author.send(embed=dismiss_tracking)
                 return
             
@@ -550,21 +562,33 @@ class MyClient(discord.Client):
 
         if message.content.startswith('!help'):
 
-            embed=discord.Embed(title="NovaTracker Commands", description="Please support this bot by telling your friends!", color=feedback_color)
-            embed.add_field(name="!start", value="Give a brief description of this bot for first time user", inline=False)
-            embed.add_field(name="!about", value="Display user number and bot status", inline=False)
-            embed.add_field(name="!register", value="Initialize user in the database, this registration is bond to the user's discord id", inline=False)
-            embed.add_field(name="!track [name/id]", value="**Where the fun begin!**", inline=False)
-            embed.add_field(name="!untrack [name/id]", value="Stop tracking the item", inline=False)
-            embed.add_field(name="!clear", value="Untrack all items at once", inline=False)
-            embed.add_field(name="!showtrack", value="List all the items user is currently tracking", inline=False)
-            embed.add_field(name="!lowest", value="Display the lowest price of the tracking items currently on market", inline=False)
-            embed.add_field(name="!report", value="Allow user to report bug", inline=False)
-            embed.add_field(name="!contact", value="Show my discord name for contact", inline=False)
-            embed.add_field(name="!quote", value="Show my favourite quote at the moment", inline=False)
-            embed.add_field(name="!help", value="List all the commands for this bot", inline=False)
+
+            try:
+
+                embed=discord.Embed(title="NovaTracker Commands", description="Please support this bot by telling your friends!", color=feedback_color)
+                embed.add_field(name="!start", value="Give a brief description of this bot for first time user", inline=False)
+                embed.add_field(name="!about", value="Display user number and bot status", inline=False)
+                embed.add_field(name="!doc", value="Disply link to github documentation", inline=False)
+                embed.add_field(name="!register", value="Initialize user in the database, this registration is bond to the user's discord id", inline=False)
+                embed.add_field(name="!track [name/id]", value="**Where the fun begin!**", inline=False)
+                embed.add_field(name="!untrack [name/id]", value="Stop tracking the item", inline=False)
+                embed.add_field(name="!clear", value="Untrack all items at once", inline=False)
+                embed.add_field(name="!showtrack", value="List all the items user is currently tracking", inline=False)
+                embed.add_field(name="!lowest", value="Display the lowest price of the tracking items currently on market", inline=False)
+                embed.add_field(name="!report", value="Allow user to report bug", inline=False)
+                embed.add_field(name="!contact", value="Show my discord name for contact", inline=False)
+                embed.add_field(name="!quote", value="Show one of my favourite quote", inline=False)
+                embed.add_field(name="!help", value="List all the commands for this bot", inline=False)
             
-            await message.author.send(embed=embed)
+                await message.author.send(embed=embed)
+            
+            except discord.errors.Forbidden:
+
+                cannot_notify_report = discord.Embed(title="Cannot message user " + str(message.author.id), description="likely because inside your discord setting-> privacy & safety-> Allow direct message from server member is turned off" , color=feedback_color) 
+                await message.channel.send(embed=cannot_notify_report)
+            return
+
+           
 
 
         if message.content.startswith('!start'):
@@ -584,18 +608,24 @@ class MyClient(discord.Client):
 
             user_numbers = bot_helper.get_user_number()
 
-            about_text = "Currently on Version 1.0 "
+            about_text = "Currently on Version 1.2 "
             about_text += "with " + "**"+str(user_numbers)+ "**" + " users\n"
+            about_text += "Thank you for using NovaTracker\n"
             about_text += "Please support this bot by telling your friends!"
             about_message = discord.Embed(title="Made with Babyish Love", description=about_text, color=feedback_color)                
             await message.author.send(embed=about_message)
 
         if message.content.startswith('!quote'):
+
             
-            quote = discord.Embed(title="if you experience hell first, then everything is heaven to you - by Babyish Love", color=feedback_color)                
+            quote = discord.Embed(title=self.q.get_random_quote(), color=feedback_color)                
             await message.author.send(embed=quote)
 
-
+        if message.content.startswith('!doc'):
+            
+            doc_link = discord.Embed(title="Github Documentation", description=DOC_LINK, color=feedback_color)                
+            await message.author.send(embed=doc_link)
+            
         if message.content.startswith('!contact'):
             
             contact_info = discord.Embed(title="Contact Info", description=MY_DISCORD_NAME, color=feedback_color)                
@@ -619,7 +649,7 @@ class MyClient(discord.Client):
             await user.send(embed=onsell_notification)
             
         except discord.errors.Forbidden:
-            print("Cannot dm to user " + user_id)
+            print("Cannot dm to user in cycle " + user_id)
             cannot_notify_report = discord.Embed(title="Cannot message user", description= str(user_id), color=feedback_color) 
             await client.get_user(MY_DISCORD_ID).send(embed=cannot_notify_report)
             return
@@ -645,6 +675,7 @@ class MyClient(discord.Client):
 
             except Exception as e:
                 print("Problem in cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
+                print(traceback.format_exc())
                 crash_title_for_me = "Problem in cycle at " + now.strftime("%Y-%m-%d %H:%M %p")
                 crash = discord.Embed(title=crash_title_for_me, description=traceback.format_exc(), color=error_color) 
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)            
