@@ -13,14 +13,15 @@ from bot_config import DOC_LINK,DISCORD_TOKEN, DISCORD_TOKEN_DEV, MY_DISCORD_NAM
 import bot_helper
 import bot_quotes
 
-error_color = 0xFF5C5C
-success_color = 0x00BF00
-warning_color = 0xF4F442
+error_color = 0xFF5C5C    # red
+success_color = 0x00BF00  # green
+warning_color = 0xF4F442  # yellow
 feedback_color = 0x6FA8DC # blue
 notify_color = 0xFF9900   # orange
 crash_title = "Oops it crashes! I am so sorry~~, will fix it ASAP"
 
 tracking_limit = 10
+version = 1.3
 
 #https://github.com/Rapptz/discord.py
 class MyClient(discord.Client):
@@ -29,6 +30,7 @@ class MyClient(discord.Client):
         super().__init__(*args, **kwargs)
         self.bg_task = self.loop.create_task(self.track_nova_market())
         self.q = bot_quotes.Quotes()
+        self.show_run = True
 
     
     async def on_ready(self):
@@ -41,6 +43,7 @@ class MyClient(discord.Client):
         #print("Changed new name to ", client.user.name)
 
         
+
 
     async def on_message(self, message):
 
@@ -554,9 +557,12 @@ class MyClient(discord.Client):
             return None
 
 
+        if message.content.startswith('!run') and message.author.id == MY_DISCORD_ID:
+            self.show_run = not self.show_run
 
-        if message.content.startswith('!report'):
-            await message.author.send("Thank you for your report, this feature is coming soon, use !contact for now")
+            run_status = "Showing notify cycle" if self.show_run else "Hiding notify cycle" 
+            set_show_run = discord.Embed(title="Cycle status", description=run_status, color=success_color) 
+            await message.author.send(embed=set_show_run)
             
 
 
@@ -575,16 +581,20 @@ class MyClient(discord.Client):
                 embed.add_field(name="!clear", value="Untrack all items at once", inline=False)
                 embed.add_field(name="!showtrack", value="List all the items user is currently tracking", inline=False)
                 embed.add_field(name="!lowest", value="Display the lowest price of the tracking items currently on market", inline=False)
-                embed.add_field(name="!report", value="Allow user to report bug", inline=False)
-                embed.add_field(name="!contact", value="Show my discord name for contact", inline=False)
+                embed.add_field(name="!contact", value="Feel free to reach out to me", inline=False)
                 embed.add_field(name="!quote", value="Show one of my favourite quote", inline=False)
                 embed.add_field(name="!help", value="List all the commands for this bot", inline=False)
             
-                await message.author.send(embed=embed)
+                await message.author.send(embed=embed) # this one is special, dont delete them right away if they dont allow private dm
+
+                bot_description = "**This bot must need your permission to allow private dm, otherwise it cannot message you and will delete you as a user!**\n"
+                bot_description += "inside your discord setting-> privacy & safety-> Turn ON Allow direct message from server member\n"
+                needDM = discord.Embed(title="Warning", description=bot_description, color=warning_color)                
+                await message.channel.send(embed=needDM)
             
             except discord.errors.Forbidden:
 
-                cannot_notify_report = discord.Embed(title="Cannot message user " + str(message.author.id), description="likely because inside your discord setting-> privacy & safety-> Allow direct message from server member is turned off" , color=feedback_color) 
+                cannot_notify_report = discord.Embed(title="Cannot message user " + str(message.author.id), description="likely because inside your discord setting-> privacy & safety-> Allow direct message from server member is turned off" , color=error_color) 
                 await message.channel.send(embed=cannot_notify_report)
             return
 
@@ -593,11 +603,12 @@ class MyClient(discord.Client):
 
         if message.content.startswith('!start'):
 
-            bot_description = "Nova Tracker is a discord bot to help user track items on sell in the market\n"
+            bot_description = "Nova Tracker is a discord bot to help user track items on sell in the Nova market\n"
             bot_description += "It personalizes your tracking preference and notifies you directly on discord\n"
             bot_description += "This bot handles all messages directly so just pm it like a discord user\n"
             bot_description += "Do notice that if Nova website is down this bot will also be down\n"
-            bot_description += "**Start using it by typing !help**\n"
+            bot_description += "**This bot must need your permission to allow private dm, otherwise it cannot message you and will delete you as a user!**\n"
+            bot_description += "inside your discord setting-> privacy & safety-> Turn ON Allow direct message from server member\n"
      
             start_message = discord.Embed(title="Start using NovaTracker", description=bot_description, color=feedback_color)                
             await message.channel.send(embed=start_message)
@@ -608,7 +619,7 @@ class MyClient(discord.Client):
 
             user_numbers = bot_helper.get_user_number()
 
-            about_text = "Currently on Version 1.2 "
+            about_text = "Currently on Version {} ".format(version)
             about_text += "with " + "**"+str(user_numbers)+ "**" + " users\n"
             about_text += "Thank you for using NovaTracker\n"
             about_text += "Please support this bot by telling your friends!"
@@ -617,44 +628,58 @@ class MyClient(discord.Client):
 
         if message.content.startswith('!quote'):
 
-            
             quote = discord.Embed(title=self.q.get_random_quote(), color=feedback_color)                
             await message.author.send(embed=quote)
 
         if message.content.startswith('!doc'):
-            
+
             doc_link = discord.Embed(title="Github Documentation", description=DOC_LINK, color=feedback_color)                
             await message.author.send(embed=doc_link)
             
         if message.content.startswith('!contact'):
-            
+
             contact_info = discord.Embed(title="Contact Info", description=MY_DISCORD_NAME, color=feedback_color)                
             await message.author.send(embed=contact_info)
 
-    
-    async def notify_user(self, user_id, notify_message):
-        user = client.get_user(user_id)
 
-        if (user is None):
+    async def delete_user(self, user_id):
 
-            # if user id is invalid, may be due to delete discord account
+        if (await bot_helper.already_registrated(user_id)):
+
             await bot_helper.remove_user(user_id)
-            print("Deleted invalid user :" + str(user_id))
+            print("Deleted user :" + str(user_id))
             delete_user_report = discord.Embed(title="Delete Invalid User", description="Deleted invalid user :" + str(user_id), color=feedback_color) 
             await client.get_user(MY_DISCORD_ID).send(embed=delete_user_report)
-            return
-
-        try:
-            onsell_notification = discord.Embed(title="Item on sell", description=notify_message, color=notify_color)
-            await user.send(embed=onsell_notification)
             
-        except discord.errors.Forbidden:
-            print("Cannot dm to user in cycle " + user_id)
-            cannot_notify_report = discord.Embed(title="Cannot message user", description= str(user_id), color=feedback_color) 
-            await client.get_user(MY_DISCORD_ID).send(embed=cannot_notify_report)
-            return
+        return
+        
+    #safe guard function in case user become not valid or turned off dm permission
+    async def message_user(self, user_id, embedded_message):
 
+        user = client.get_user(user_id)
 
+        if (await bot_helper.already_registrated(user_id)):
+
+            if (user is None):
+                # if user id is invalid, may be due to delete discord account
+                await self.delete_user(user.id)
+
+            try:
+                await user.send(embed=embedded_message)
+
+            # user disable private dm
+            except discord.errors.Forbidden:
+                print("Cannot dm to user {}".format(user_id))
+                cannot_notify_report = discord.Embed(title="Cannot message user", description= str(user_id), color=feedback_color) 
+                await client.get_user(MY_DISCORD_ID).send(embed=cannot_notify_report)
+                await self.delete_user(user_id)
+        return
+    
+    async def notify_user(self, user_id, notify_message):
+ 
+        onsell_notification = discord.Embed(title="Item on sell", description=notify_message, color=notify_color)
+        await self.message_user(user_id, onsell_notification)
+            
     async def track_nova_market(self):
 
         await self.wait_until_ready()
@@ -664,29 +689,41 @@ class MyClient(discord.Client):
             await asyncio.sleep(900) # 900s = run every 15 minutes
             
             now = datetime.now(tz=pytz.utc)
-            now = now.astimezone(timezone('US/Pacific'))
+            start_time = now.astimezone(timezone('US/Pacific'))
+            print("Starting cycle at " + start_time.strftime("%Y-%m-%d %H:%M %p"))
+            s = time.time()
             
-            print("Starting cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
-
             # get the market data
             try: 
                 loop = asyncio.get_event_loop()
                 to_notify = await loop.run_in_executor(ThreadPoolExecutor(), bot_helper.handle_user_trackings)
+                print("Obtaining market info took {:.2f}s".format((time.time() - s)))
+
+                # notify users
+                for user_id, message in to_notify:
+                    await self.notify_user(user_id,message)
+
 
             except Exception as e:
-                print("Problem in cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
+                now = datetime.now(tz=pytz.utc)
+                problem_time = now.astimezone(timezone('US/Pacific'))
+                print("Problem in cycle at " + problem_time.strftime("%Y-%m-%d %H:%M %p"))
                 print(traceback.format_exc())
                 crash_title_for_me = "Problem in cycle at " + now.strftime("%Y-%m-%d %H:%M %p")
                 crash = discord.Embed(title=crash_title_for_me, description=traceback.format_exc(), color=error_color) 
-                await client.get_user(MY_DISCORD_ID).send(embed=crash)            
+                await client.get_user(MY_DISCORD_ID).send(embed=crash)
 
-            # notify users
-            for user_id, message in to_notify:
-                await self.notify_user(user_id,message)
+
+            now = datetime.now(tz=pytz.utc)
+            end_time = now.astimezone(timezone('US/Pacific'))
+            run_info = "Complete cycle at " + end_time.strftime("%Y-%m-%d %H:%M %p") + ", execution time is {:.2f}s".format(time.time() - s)
+            print(run_info)
             
-            print("Complete cycle at " + now.strftime("%Y-%m-%d %H:%M %p"))
-                                
+            if (self.show_run):
+                running_proof = discord.Embed(title="Running", description=run_info, color=success_color) 
+                await client.get_user(MY_DISCORD_ID).send(embed=running_proof) 
         return
+
 
 
 client = MyClient()

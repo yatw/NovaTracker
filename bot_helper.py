@@ -372,6 +372,7 @@ def handle_user_trackings():
 
     to_notify = []
 
+ 
     for item in db.items.find():
 
 
@@ -409,7 +410,7 @@ def handle_user_trackings():
                     message = construct_notification_message(item['ITEM_NAME'], item['ITEM_ID'], refinable, refine_level, lowest_price, location)
                     to_notify.append((tracking_user,message))
 
-              
+          
     return to_notify
 
 def no_one_tracking(refine_level_list):

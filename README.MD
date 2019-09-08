@@ -13,21 +13,21 @@ A discord bot to help user track items on sell in the market, no more physically
 
 There is always that one item that is either never on sell or always overprice. If you still really want it, you either have to constantly monitor the chat channel or actively check the market yourself.
 
-But what if there is a bot that automatically notify you when the item you are looking for is on sell?
-
 #### How to use
 
 This bot is freely available to all Nova Ragnarok players. Simply invite this bot to your server or join a server that already has this bot. This bot is meant to privately take in commands, as such, it will only response through private message. Once you have set up your preference, you will get on sell notification.
 
+
+**This bot must need your permission to allow private dm, otherwise it cannot message you and will delete you as a user!**   
+**inside your discord setting-> privacy & safety-> Turn ON Allow direct message from server member**
+
 #### Technologies
 
-This bot is written in python using [Discord rewrite Rapptz](https://github.com/Rapptz/discord.py)
-
-The database used is [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-
-The library used to extract market information is Beautiful Soup
-
-Hosted on AWS EC2 instance
+- **Language**: Python
+- **Discord development**: [Discord rewrite Rapptz](https://github.com/Rapptz/discord.py)
+- **Database**: [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+- **Web scraping**: Beautiful Soup
+- **Hosting**: AWS EC2 instance
 
 #### Status
 
@@ -85,9 +85,6 @@ When user requested to track Crimson Bow [2] refine >= 15 at price <= 800,000,00
 *  `!lowest`
 *Display the lowest price of the tracking items currently on market*
 
-*  `!report`
-*Allow user to report bug*
-
 *  `!quote`
 *Randomly show one of my favourite quote*
 
@@ -104,7 +101,7 @@ When user requested to track Crimson Bow [2] refine >= 15 at price <= 800,000,00
 *List all the commands for this bot*
 
 *  `!contact`
-*Show my discord name for contact*
+*Feel free to reach out to me*
 
 ## Demo
 

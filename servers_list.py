@@ -11,9 +11,6 @@ import bot_helper
 import sys
 
 
-'''
-A simple script to see what user is tracking what
-'''
 
 error_color = 0xFF5C5C
 success_color = 0x00BF00

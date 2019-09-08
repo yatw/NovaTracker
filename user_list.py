@@ -10,11 +10,6 @@ from discord.ext import commands
 from bot_config import DISCORD_TOKEN, DISCORD_TOKEN_DEV, MY_DISCORD_NAME, MY_DISCORD_ID, db
 import bot_helper
 
-
-'''
-A simple script to see what user is tracking what
-'''
-
 error_color = 0xFF5C5C
 success_color = 0x00BF00
 warning_color = 0xF4F442

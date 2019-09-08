@@ -12,14 +12,13 @@ class Quotes:
             "I encourage people to cheat because your ability to not get caught is also being tested - Babyish Melody",
             "Heaven is for the weak - Babyish Myth",
             "No one cares about it more than you; if you don't care, no one care - Babyish Stealth",
-            "Over coming the hell of a near death experience is the true secret behind a monster's explosive growth - Phoenix man",
-            "We human beings are strong because we have the ability to change ourselves. - Saitama",
-            "If I die here, then I'm a man that could only make it this far - Zoro",
+            "Over coming the hell of a near death experience is the true secret behind a monster's explosive growth",
+            "We human beings are strong because we have the ability to change ourselves.",
+            "If I die here, then I'm a man that could only make it this far",
             "Ora Ora Ora",
             "Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora Ora",
-            "I REJECT MY HUMANITY, JOJO! - Dio",
-            "Don't forget. Always, somewhere, someone is fighting for you. As long as you remember her, you are not alone."
-
+            "I REJECT MY HUMANITY, JOJO!",
+            "Don't forget. Always, somewhere, someone is fighting for you. As long as you remember her, you are not alone.",
             ]
 
         self.total = len(self.quotes)
