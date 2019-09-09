@@ -18,7 +18,7 @@ There is always that one item that is either never on sell or always overprice. 
 This bot is freely available to all Nova Ragnarok players. Simply invite this bot to your server or join a server that already has this bot. This bot is meant to privately take in commands, as such, it will only response through private message. Once you have set up your preference, you will get on sell notification.
 
 
-**This bot must need your permission to allow private dm, otherwise it cannot message you and will delete you as a user!**   
+**This bot must need your permission to allow private dm, otherwise it cannot notify you and will delete you as a user!**   
 **inside your discord setting-> privacy & safety-> Turn ON Allow direct message from server member**
 
 #### Technologies

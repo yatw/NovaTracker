@@ -21,7 +21,7 @@ notify_color = 0xFF9900   # orange
 crash_title = "Oops it crashes! I am so sorry~~, will fix it ASAP"
 
 tracking_limit = 10
-version = 1.3
+version = 1.4
 
 #https://github.com/Rapptz/discord.py
 class MyClient(discord.Client):
@@ -63,25 +63,24 @@ class MyClient(discord.Client):
             
             if (await bot_helper.already_registrated(user_discord_id)):
                 registration_fail = discord.Embed(title="Registration Fail", description="You have already registered", color=error_color) 
-                await message.author.send(embed=registration_fail)
+                await self.message_user(user_discord_id, registration_fail, message.channel)
                 return
 
             try:
                 await bot_helper.user_register(user_discord_id)
                 registration_success = discord.Embed(title="Registration Success", description="you can start tracking items with !track [name/id] command", color=success_color)
-                await message.author.send(embed=registration_success)
+                await self.message_user(user_discord_id, registration_success, message.channel)
 
                 thankyou_note = discord.Embed(title="Thank You", description="If you can give it that much of a chance, I can already thank you", color=success_color)
-                await message.author.send(embed=thankyou_note)
+                await self.message_user(user_discord_id, thankyou_note, message.channel)
 
                 user_numbers = bot_helper.get_user_number()
                 increase_user_report = discord.Embed(title="New User Register", description= str(user_discord_id) + " just registered, total user number is: " +  "**"+str(user_numbers)+ "**", color=feedback_color) 
                 await client.get_user(MY_DISCORD_ID).send(embed=increase_user_report)
-                     
                 
             except Exception as e:
                 crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
-                await message.author.send(embed=crash)
+                await self.message_user(user_discord_id, crash, message.channel)
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)
                 
             return None
@@ -92,7 +91,7 @@ class MyClient(discord.Client):
 
             if not(await bot_helper.already_registrated(user_discord_id)):
                 need_registration = discord.Embed(title="Need Registration", description="Please register with !register command", color=error_color) 
-                await message.author.send(embed=need_registration)
+                await self.message_user(user_discord_id, need_registration, message.channel)
                 return
                 
 
@@ -100,18 +99,17 @@ class MyClient(discord.Client):
                 tracking_message = await bot_helper.show_tracking_items(user_discord_id)
             except Exception as e:
                 crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
-                await message.author.send(embed=crash)
+                await self.message_user(user_discord_id, crash, message.channel)
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)
                 return
 
             if (tracking_message == ""):
                 nothing_on_track = discord.Embed(title="No items tracking", description="You are currently not tracking any item", color=feedback_color) 
-                await message.author.send(embed=nothing_on_track)
+                await self.message_user(user_discord_id, nothing_on_track, message.channel)
                 return
 
             tracking_result = discord.Embed(title="You are currently tracking:", description=tracking_message, color=feedback_color)
-            await message.author.send(embed=tracking_result)
-            
+            await self.message_user(user_discord_id, tracking_result, message.channel)
             return None
 
 
@@ -124,16 +122,18 @@ class MyClient(discord.Client):
 
         
             # Check if the user is registered
+            user = message.author
             user_discord_id = message.author.id
+            
             if not(await bot_helper.already_registrated(user_discord_id)):
                 need_registration = discord.Embed(title="Need Registration", description="Please register with !register command", color=error_color) 
-                await message.author.send(embed=need_registration)
+                await self.message_user(user_discord_id, need_registration, message.channel)
                 return
 
             # Check the user tracking item limit
             if (await bot_helper.count_tracking_item(user_discord_id) >= tracking_limit) and user_discord_id != MY_DISCORD_ID:
                 max_tracking = discord.Embed(title="Maximum tracking limit", description="You are at your maximum tracking limit ("+ str(tracking_limit)+ "), try to untrack some items.", color=warning_color)
-                await message.author.send(embed=max_tracking)
+                await self.message_user(user_discord_id, max_tracking, message.channel)
                 return
 
             
@@ -154,7 +154,7 @@ class MyClient(discord.Client):
                 invalid_format_response += "!track item_id/item name \n"
                 invalid_format_response += "!track !track 21018 or !track lindy hop"
                 invalid_tracking_input = discord.Embed(title=search_term, description=invalid_format_response, color=warning_color)
-                await message.author.send(embed=invalid_tracking_input)
+                await self.message_user(user_discord_id, invalid_tracking_input, message.channel)
                 return
 
 
@@ -169,7 +169,7 @@ class MyClient(discord.Client):
 
                 if (item_name == "Unknown"):
                     no_result_respond = discord.Embed(title="No item found", description="There is no item with ID " + search_term, color=warning_color)
-                    await message.author.send(embed=no_result_respond)
+                    await self.message_user(user_discord_id, no_result_respond, message.channel)
                     return
 
             # user type in item name
@@ -181,13 +181,13 @@ class MyClient(discord.Client):
                 except Exception as e:
                     
                     nova_down_respond = discord.Embed(title="Cannot Connect to Nova at the Moment", description="Please try again some other time", color=error_color)
-                    await message.author.send(embed=nova_down_respond)
+                    await self.message_user(user_discord_id, nova_down_respond, message.channel)
                     return
 
                                 
                 if search_matches is None:
                     no_result_respond = discord.Embed(title="No item found", description="There is no search result for " + search_term + ", try using item id", color=warning_color)
-                    await message.author.send(embed=no_result_respond)
+                    await self.message_user(user_discord_id, no_result_respond, message.channel)
                     return
 
 
@@ -205,15 +205,15 @@ class MyClient(discord.Client):
                         count += 1
                         select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
                         
-                    await message.author.send(embed=select_item)
+                    await self.message_user(user_discord_id, select_item, message.channel)
 
                     # Get user input
                     try:
-                        user_input_index = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
+                        user_input_index = await client.wait_for('message', check = lambda message: message.author == user , timeout=120.0)
 
                     except asyncio.TimeoutError:
                         dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
-                        await message.author.send(embed=dismiss_select)
+                        await self.message_user(user_discord_id, dismiss_select, message.channel)
                         return
 
                     
@@ -227,7 +227,7 @@ class MyClient(discord.Client):
                         
                     except Exception as e:
                         dismiss_select = discord.Embed(title="Dismiss", description=str(e), color=warning_color)
-                        await message.author.send(embed=dismiss_select)
+                        await self.message_user(user_discord_id, dismiss_select, message.channel)
                         return
                     
                 item_id = search_matches[index][1]
@@ -238,11 +238,11 @@ class MyClient(discord.Client):
             if (await bot_helper.already_tracking(user_discord_id, item_id)):
                     dobule_tracking_response = 'You are already tracking ' + '**' + item_name + '**' + "(" + item_id + ")"
                     double_tracking = discord.Embed(title="Tracking Fail", description=dobule_tracking_response, color=warning_color)
-                    await message.author.send(embed=double_tracking)
+                    await self.message_user(user_discord_id, double_tracking, message.channel)
                     return
             else:
                 item_selected = discord.Embed(title="You selected " + "**"+item_name+"**" + " (" + item_id + ")", description=" ", color=feedback_color)
-                await message.author.send(embed=item_selected)
+                await self.message_user(user_discord_id, item_selected, message.channel)
 
 
             try:
@@ -250,7 +250,7 @@ class MyClient(discord.Client):
                 
             except Exception as e:
                 nova_down_respond = discord.Embed(title="Cannot Connect to Nova at the Moment", description="Please try again some other time", color=error_color)
-                await message.author.send(embed=nova_down_respond)
+                await self.message_user(user_discord_id, nova_down_respond, message.channel)
                 return
                 
             refine_goal = 0
@@ -262,15 +262,15 @@ class MyClient(discord.Client):
             if (refinable):
                 
                 enter_refine_level = discord.Embed(title="Enter a refine goal, get notify when the refine is at least >= ?", description="0-20, type anything else to dismiss", color=feedback_color)
-                await message.author.send(embed=enter_refine_level)
+                await self.message_user(user_discord_id, enter_refine_level, message.channel)
 
                 # Get user input
                 try:
-                    user_input_refine_goal = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
+                    user_input_refine_goal = await client.wait_for('message', check = lambda message: message.author == user, timeout=120.0)
 
                 except asyncio.TimeoutError:
                     dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
-                    await message.author.send(embed=dismiss_select)
+                    await self.message_user(user_discord_id, dismiss_select, message.channel)
                     return
                     
                 try:
@@ -282,21 +282,21 @@ class MyClient(discord.Client):
 
                 except Exception as e:
                     dismiss_select = discord.Embed(title="Dismiss", description=str(e), color=warning_color)
-                    await message.author.send(embed=dismiss_select)
+                    await self.message_user(user_discord_id, dismiss_select, message.channel)
                     return
 
             ### PROMPT for ideal_price
             
             enter_ideal_price = discord.Embed(title="Enter your ideal price, get notify when the price is <= ?", description="(accept k = 000, m = 000,000, and b = 000,000,000), etc 50m", color=feedback_color)
-            await message.author.send(embed=enter_ideal_price)
+            await self.message_user(user_discord_id, enter_ideal_price, message.channel)
 
             # Get user input
             try:
-                user_input_ideal_price = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
+                user_input_ideal_price = await client.wait_for('message', check = lambda message: message.author == user, timeout=120.0)
 
             except asyncio.TimeoutError:
                 dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
-                await message.author.send(embed=dismiss_select)
+                await self.message_user(user_discord_id, dismiss_select, message.channel)
                 return
 
             
@@ -311,7 +311,7 @@ class MyClient(discord.Client):
 
             except Exception as e:
                 dismiss_select = discord.Embed(title="Dismiss", description=str(e), color=warning_color)
-                await message.author.send(embed=dismiss_select)
+                await self.message_user(user_discord_id, dismiss_select, message.channel)
                 return
     
                 
@@ -329,16 +329,16 @@ class MyClient(discord.Client):
             # debug purpose line
             confirm_track.add_field(name="-----------  System think it is Refinable = " + str(refinable) + "-----------", value="For debug purpose, please dismiss and !report if you believe the system is wrong", inline=False)
                 
-            await message.author.send(embed=confirm_track)
+            await self.message_user(user_discord_id, confirm_track, message.channel)
 
             # Get user input
             try:
-                user_confirm_text = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
+                user_confirm_text = await client.wait_for('message', check = lambda message: message.author == user, timeout=120.0)
                 #print("User confirm text: " + user_confirm_text.content)
                 
             except asyncio.TimeoutError:
                 dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
-                await message.author.send(embed=dismiss_select)
+                await self.message_user(user_discord_id, dismiss_select, message.channel)
                 return
             
             if (user_confirm_text.content == "CONFIRM"):
@@ -355,19 +355,19 @@ class MyClient(discord.Client):
                         tracking_success_response += " refine >= " + '**' + str(refine_goal) + '**'
                     tracking_success = discord.Embed(title="Tracking Success", description=tracking_success_response, color=success_color)
                     
-                    await message.author.send(embed=tracking_success)
+                    await self.message_user(user_discord_id, tracking_success, message.channel)
 
                     
                 except Exception as e:
                     crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
-                    await message.author.send(embed=crash)
+                    await self.message_user(user_discord_id, crash, message.channel)
                     await client.get_user(MY_DISCORD_ID).send(embed=crash)
                     
                 return
             else:
 
                 dismiss_tracking = discord.Embed(title='Dismiss tracking request for ' + item_name, description="Make sure you use uppercase __**CONFIRM**__", color=warning_color)
-                await message.author.send(embed=dismiss_tracking)
+                await self.message_user(user_discord_id, dismiss_tracking, message.channel)
                 return
             
             return None
@@ -378,11 +378,11 @@ class MyClient(discord.Client):
             # Check if the user input is correct
             # Check if the item is alredy tracking
 
-
+            user = message.author
             user_discord_id = message.author.id
             if not(await bot_helper.already_registrated(user_discord_id)):
                 need_registration = discord.Embed(title="Need Registration", description="Please register with !register command", color=error_color) 
-                await message.author.send(embed=need_registration)
+                await self.message_user(user_discord_id, need_registration, message.channel)
                 return
                 
             
@@ -396,7 +396,7 @@ class MyClient(discord.Client):
          
                 invalid_format_response = "Example Usage is: \n !untrack item_id\n !untrack 21018"
                 invalid_tracking_input = discord.Embed(title=search_term, description=invalid_format_response, color=warning_color)
-                await message.author.send(embed=invalid_tracking_input)
+                await self.message_user(user_discord_id, invalid_tracking_input, message.channel)
                 return
 
             item_id = None
@@ -410,7 +410,7 @@ class MyClient(discord.Client):
 
                 if (item_name == "Unknown"):
                     no_result_respond = discord.Embed(title="No item found", description="There is no item with ID " + search_term, color=warning_color)
-                    await message.author.send(embed=no_result_respond)
+                    await self.message_user(user_discord_id, no_result_respond, message.channel)
                     return
 
             # user type in item_name
@@ -422,13 +422,13 @@ class MyClient(discord.Client):
                 except Exception as e:
                     
                     nova_down_respond = discord.Embed(title="Cannot Connect to Nova at the Moment", description="Please try again some other time", color=error_color)
-                    await message.author.send(embed=nova_down_respond)
+                    await self.message_user(user_discord_id, nova_down_respond, message.channel)
                     return
 
                                 
                 if search_matches is None:
                     no_result_respond = discord.Embed(title="No item found", description="There is no search result for " + search_term + ", try using item id", color=warning_color)
-                    await message.author.send(embed=no_result_respond)
+                    await self.message_user(user_discord_id, no_result_respond, message.channel)
                     return
 
 
@@ -446,14 +446,14 @@ class MyClient(discord.Client):
                         count += 1
                         select_item.add_field(name="Index: " + str(count), value="**" + match[0] + "** (" + match[1] + ")", inline=False)
                         
-                    await message.author.send(embed=select_item)
+                    await self.message_user(user_discord_id, select_item, message.channel)
 
                     # Get user input
                     try:
-                        user_input_index = await client.wait_for('message', check = lambda message: message.author != self.user and not message.author.bot, timeout=120.0)
+                        user_input_index = await client.wait_for('message', check = lambda message: message.author == user, timeout=120.0)
                     except asyncio.TimeoutError:
                         dismiss_select = discord.Embed(title="Dismiss", description="Automatically dismiss after 2 minutes", color=warning_color)
-                        await message.author.send(embed=dismiss_select)
+                        await self.message_user(user_discord_id, dismiss_select, message.channel)
                         return
                     
                     try:
@@ -466,7 +466,7 @@ class MyClient(discord.Client):
                         
                     except Exception as e:
                         dismiss_select = discord.Embed(title="Dismiss", description=str(e), color=warning_color)
-                        await message.author.send(embed=dismiss_select)
+                        await self.message_user(user_discord_id, dismiss_select, message.channel)
                         return
                     
                 item_id = search_matches[index][1]
@@ -477,7 +477,7 @@ class MyClient(discord.Client):
 
                 not_tracking_response = "You have not been tracking " + "**" +item_name + "**" + " (" + item_id + ")"
                 not_tracking = discord.Embed(title="Untrack Fail", description=not_tracking_response, color=warning_color)                
-                await message.author.send(embed=not_tracking)
+                await self.message_user(user_discord_id, not_tracking, message.channel)
                 return
 
             try:
@@ -485,11 +485,11 @@ class MyClient(discord.Client):
 
                 untrack_success_response = "You are no longer tracking " + "**" + item_name + "**" + " (" + item_id + ")"
                 untrack_success = discord.Embed(title="Untrack Success", description=untrack_success_response, color=success_color)                
-                await message.author.send(embed=untrack_success)
+                await self.message_user(user_discord_id, untrack_success, message.channel)
                 
             except Exception as e:
                 crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
-                await message.author.send(embed=crash)
+                await self.message_user(user_discord_id, crash, message.channel)
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)
 
             return None
@@ -501,7 +501,7 @@ class MyClient(discord.Client):
 
             if not(await bot_helper.already_registrated(user_discord_id)):
                 need_registration = discord.Embed(title="Need Registration", description="Please register with !register command", color=error_color) 
-                await message.author.send(embed=need_registration)
+                await self.message_user(user_discord_id, need_registration, message.channel)
                 return
 
 
@@ -510,13 +510,13 @@ class MyClient(discord.Client):
 
             except Exception as e:
                 crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
-                await message.author.send(embed=crash)
+                await self.message_user(user_discord_id, crash, message.channel)
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)
 
 
             if (tracking_items == []):
                 nothing_on_track = discord.Embed(title="No items tracking", description="You are currently not tracking any item", color=feedback_color) 
-                await message.author.send(embed=nothing_on_track)
+                await self.message_user(user_discord_id, nothing_on_track, message.channel)
                 return
 
 
@@ -524,7 +524,7 @@ class MyClient(discord.Client):
 
                 untrack_success_response = "You are no longer tracking " + "**" + item_name + "**" + " (" + item_id + ")"
                 untrack_success = discord.Embed(title="Untrack Success", description=untrack_success_response, color=success_color)                
-                await message.author.send(embed=untrack_success)
+                await self.message_user(user_discord_id, untrack_success, message.channel)
                 
                 
             return None
@@ -535,24 +535,24 @@ class MyClient(discord.Client):
 
             if not(await bot_helper.already_registrated(user_discord_id)):
                 need_registration = discord.Embed(title="Need Registration", description="Please register with !register command", color=error_color) 
-                await message.author.send(embed=need_registration)
+                await self.message_user(user_discord_id, need_registration, message.channel)
                 return
                 
             try:
                 lowest_report = await bot_helper.get_lowest(user_discord_id)
             except Exception as e:
                 crash = discord.Embed(title=crash_title, description=str(message.author.id) +"\n"+ traceback.format_exc(), color=error_color) 
-                await message.author.send(embed=crash)
+                await self.message_user(user_discord_id, crash, message.channel)
                 await client.get_user(MY_DISCORD_ID).send(embed=crash)
                 return
 
             if (lowest_report == []):
                 nothing_on_track = discord.Embed(title="No items tracking", description="You are currently not tracking any item", color=feedback_color) 
-                await message.author.send(embed=nothing_on_track)
+                await self.message_user(user_discord_id, nothing_on_track, message.channel)
                 return
 
             for result in lowest_report:
-                await self.notify_user(user_discord_id,result)
+                await self.notify_user(user_discord_id,result, message.channel)
 
             return None
 
@@ -562,40 +562,31 @@ class MyClient(discord.Client):
 
             run_status = "Showing notify cycle" if self.show_run else "Hiding notify cycle" 
             set_show_run = discord.Embed(title="Cycle status", description=run_status, color=success_color) 
-            await message.author.send(embed=set_show_run)
+            await client.get_user(MY_DISCORD_ID).send(embed=set_show_run) 
             
 
 
         if message.content.startswith('!help'):
 
+            user_discord_id = message.author.id
 
-            try:
-
-                embed=discord.Embed(title="NovaTracker Commands", description="Please support this bot by telling your friends!", color=feedback_color)
-                embed.add_field(name="!start", value="Give a brief description of this bot for first time user", inline=False)
-                embed.add_field(name="!about", value="Display user number and bot status", inline=False)
-                embed.add_field(name="!doc", value="Disply link to github documentation", inline=False)
-                embed.add_field(name="!register", value="Initialize user in the database, this registration is bond to the user's discord id", inline=False)
-                embed.add_field(name="!track [name/id]", value="**Where the fun begin!**", inline=False)
-                embed.add_field(name="!untrack [name/id]", value="Stop tracking the item", inline=False)
-                embed.add_field(name="!clear", value="Untrack all items at once", inline=False)
-                embed.add_field(name="!showtrack", value="List all the items user is currently tracking", inline=False)
-                embed.add_field(name="!lowest", value="Display the lowest price of the tracking items currently on market", inline=False)
-                embed.add_field(name="!contact", value="Feel free to reach out to me", inline=False)
-                embed.add_field(name="!quote", value="Show one of my favourite quote", inline=False)
-                embed.add_field(name="!help", value="List all the commands for this bot", inline=False)
+            embed=discord.Embed(title="NovaTracker Commands", description="Please support this bot by telling your friends!", color=feedback_color)
+            embed.add_field(name="!start", value="Give a brief description of this bot for first time user", inline=False)
+            embed.add_field(name="!about", value="Display user number and bot status", inline=False)
+            embed.add_field(name="!doc", value="Disply link to github documentation", inline=False)
+            embed.add_field(name="!register", value="Initialize user in the database, this registration is bond to the user's discord id", inline=False)
+            embed.add_field(name="!track [name/id]", value="**Where the fun begin!**", inline=False)
+            embed.add_field(name="!untrack [name/id]", value="Stop tracking the item", inline=False)
+            embed.add_field(name="!clear", value="Untrack all items at once", inline=False)
+            embed.add_field(name="!showtrack", value="List all the items user is currently tracking", inline=False)
+            embed.add_field(name="!lowest", value="Display the lowest price of the tracking items currently on market", inline=False)
+            embed.add_field(name="!contact", value="Feel free to reach out to me", inline=False)
+            embed.add_field(name="!quote", value="Show one of my favourite quote", inline=False)
+            embed.add_field(name="!help", value="List all the commands for this bot", inline=False)
+        
+            await self.message_user(user_discord_id, embed, message.channel)
             
-                await message.author.send(embed=embed) # this one is special, dont delete them right away if they dont allow private dm
 
-                bot_description = "**This bot must need your permission to allow private dm, otherwise it cannot message you and will delete you as a user!**\n"
-                bot_description += "inside your discord setting-> privacy & safety-> Turn ON Allow direct message from server member\n"
-                needDM = discord.Embed(title="Warning", description=bot_description, color=warning_color)                
-                await message.channel.send(embed=needDM)
-            
-            except discord.errors.Forbidden:
-
-                cannot_notify_report = discord.Embed(title="Cannot message user " + str(message.author.id), description="likely because inside your discord setting-> privacy & safety-> Allow direct message from server member is turned off" , color=error_color) 
-                await message.channel.send(embed=cannot_notify_report)
             return
 
            
@@ -603,19 +594,23 @@ class MyClient(discord.Client):
 
         if message.content.startswith('!start'):
 
+            user_discord_id = message.author.id
+
             bot_description = "Nova Tracker is a discord bot to help user track items on sell in the Nova market\n"
             bot_description += "It personalizes your tracking preference and notifies you directly on discord\n"
             bot_description += "This bot handles all messages directly so just pm it like a discord user\n"
             bot_description += "Do notice that if Nova website is down this bot will also be down\n"
-            bot_description += "**This bot must need your permission to allow private dm, otherwise it cannot message you and will delete you as a user!**\n"
+            bot_description += "**This bot must need your permission to allow private dm, otherwise it cannot notify you and will delete you as a user!**\n"
             bot_description += "inside your discord setting-> privacy & safety-> Turn ON Allow direct message from server member\n"
      
             start_message = discord.Embed(title="Start using NovaTracker", description=bot_description, color=feedback_color)                
-            await message.channel.send(embed=start_message)
+            await self.message_user(user_discord_id, start_message, message.channel)
             
         # For fun stuff all here======================================
     
         if message.content.startswith('!about'):
+
+            user_discord_id = message.author.id
 
             user_numbers = bot_helper.get_user_number()
 
@@ -624,22 +619,25 @@ class MyClient(discord.Client):
             about_text += "Thank you for using NovaTracker\n"
             about_text += "Please support this bot by telling your friends!"
             about_message = discord.Embed(title="Made with Babyish Love", description=about_text, color=feedback_color)                
-            await message.author.send(embed=about_message)
+            await self.message_user(user_discord_id, about_message, message.channel)
 
         if message.content.startswith('!quote'):
 
+            user_discord_id = message.author.id
             quote = discord.Embed(title=self.q.get_random_quote(), color=feedback_color)                
-            await message.author.send(embed=quote)
+            await self.message_user(user_discord_id, quote, message.channel)
 
         if message.content.startswith('!doc'):
 
+            user_discord_id = message.author.id
             doc_link = discord.Embed(title="Github Documentation", description=DOC_LINK, color=feedback_color)                
-            await message.author.send(embed=doc_link)
+            await self.message_user(user_discord_id, doc_link, message.channel)
             
         if message.content.startswith('!contact'):
 
+            user_discord_id = message.author.id
             contact_info = discord.Embed(title="Contact Info", description=MY_DISCORD_NAME, color=feedback_color)                
-            await message.author.send(embed=contact_info)
+            await self.message_user(user_discord_id, contact_info, message.channel)
 
 
     async def delete_user(self, user_id):
@@ -654,10 +652,11 @@ class MyClient(discord.Client):
         return
         
     #safe guard function in case user become not valid or turned off dm permission
-    async def message_user(self, user_id, embedded_message):
+    async def message_user(self, user_id, embedded_message, channel = None):
 
         user = client.get_user(user_id)
 
+        # not user can get pass in from notify_user having multiple messages and already delete the user in the first message
         if (await bot_helper.already_registrated(user_id)):
 
             if (user is None):
@@ -665,20 +664,36 @@ class MyClient(discord.Client):
                 await self.delete_user(user.id)
 
             try:
+                # try to DM first...
+
                 await user.send(embed=embedded_message)
 
-            # user disable private dm
+            # user disable private dm and not come from a channel, delete user
             except discord.errors.Forbidden:
-                print("Cannot dm to user {}".format(user_id))
-                cannot_notify_report = discord.Embed(title="Cannot message user", description= str(user_id), color=feedback_color) 
-                await client.get_user(MY_DISCORD_ID).send(embed=cannot_notify_report)
-                await self.delete_user(user_id)
+
+                # if message comes from a channel, reply back to channel
+                if (channel is not None):
+                    await channel.send(embed=embedded_message)
+
+                    # give them a warning... for no allowing DM
+                    need_dmp = "**This bot must need your permission to allow private dm, otherwise it cannot notify you and will delete you as a user!**\n"
+                    need_dmp += "inside your discord setting-> privacy & safety-> Turn ON Allow direct message from server member\n"
+                    needDM = discord.Embed(title="Warning", description=need_dmp, color=warning_color)                
+                    await channel.send(embed=needDM)
+                    
+                else:
+                # no channel, delete this user
+
+                    cannot_notify_report = discord.Embed(title="Cannot message user", description= str(user_id), color=feedback_color) 
+                    await client.get_user(MY_DISCORD_ID).send(embed=cannot_notify_report)
+                    await self.delete_user(user_id)
         return
     
-    async def notify_user(self, user_id, notify_message):
+    async def notify_user(self, user_id, notify_message, channel = None):
+        # channel will be None if it is pass from cycle, not None if pass from !lowest
  
         onsell_notification = discord.Embed(title="Item on sell", description=notify_message, color=notify_color)
-        await self.message_user(user_id, onsell_notification)
+        await self.message_user(user_id, onsell_notification, channel)
             
     async def track_nova_market(self):
 
@@ -699,7 +714,8 @@ class MyClient(discord.Client):
                 to_notify = await loop.run_in_executor(ThreadPoolExecutor(), bot_helper.handle_user_trackings)
                 print("Obtaining market info took {:.2f}s".format((time.time() - s)))
 
-                # notify users
+
+                # notify users, disable in developement
                 for user_id, message in to_notify:
                     await self.notify_user(user_id,message)
 
