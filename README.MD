@@ -1,10 +1,12 @@
 
+
 # NovaTracker
 
 A discord bot to help user track items on sell in the market, no more physically logging in and manually checking it yourself!
 
 ### [To add this bot to your server](https://discordapp.com/api/oauth2/authorize?client_id=571526126602813441&permissions=2048&scope=bot)
 
+#### This project is outdated and no longer functional
   
 ## About the project
 
@@ -29,16 +31,15 @@ This bot is freely available to all Nova Ragnarok players. Simply invite this bo
 - **Web scraping**: Beautiful Soup
 - **Hosting**: AWS EC2 instance
 
-#### Status
-
-The bot is complete and functional.
-
 #### Known Issue
 
 1. Sometime user will not receive response because inside discord setting-> privacy & safety-> Allow direct message from server member is turned off.
 
 2. Sometime the recurring market check will stop, and in that case I will have to restart the program on AWS.
-  
+
+#### Challenges
+1. Nova website require login to access the market data
+2. Market data are dynamically generated from JavaScript
 
 ## Personalize tracking preference
 
